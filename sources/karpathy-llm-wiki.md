@@ -31,7 +31,6 @@ Andrej Karpathy's pattern for a persistent, compounding LLM knowledge base. The 
 - `sources/` for ingested references
 - AGENTS.md in project dir (not vault)
 
-## What this wiki omits (for now)
+## What this wiki omits
 
-- `raw/` drop zone — not yet set up for assistant-agent
-- Vector DB / provenance tracking — not needed at this scale
+- Vector DB / provenance tracking — not needed at this scale (sub-100 sources)

@@ -3,6 +3,8 @@
 Gary's AI secretary knowledge base. Read this first when answering queries.
 Schema and workflows: see `AGENTS.md` in the project directory (`~/Github/assistant-agent/AGENTS.md`).
 
+**Drop zone**: put files to ingest in `raw/` — then say "ingest raw/" to the secretary.
+
 ## Architecture
 
 - [[architecture/overview]] — plumbing/brain split, SDK wiring, session continuity

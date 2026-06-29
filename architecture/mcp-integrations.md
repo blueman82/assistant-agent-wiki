@@ -34,3 +34,4 @@ The Chrome extension requires `extraArgs: { "chrome": null }` in the SDK query o
 - [[architecture/overview]] — how tools are wired into the agent
 - [[capabilities/email]] — Gmail tool usage patterns
 - [[capabilities/calendar]] — Calendar tool usage patterns
+- [[capabilities/slack]] — Slack tool usage patterns

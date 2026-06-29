@@ -2,8 +2,8 @@
 title: "Extending system.md"
 type: pattern
 created: 2026-06-07
-last_updated: 2026-06-07
-sources: ["prompts/system.md", "CLAUDE.md"]
+last_updated: 2026-06-29
+sources: ["prompts/system.md", "CLAUDE.md", "secretary.ts"]
 tags: [pattern, system-prompt, behaviour]
 ---
 

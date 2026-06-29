@@ -13,6 +13,7 @@ Schema and workflows: see `AGENTS.md` in the project directory (`~/Github/assist
 ## Capabilities
 
 - [[capabilities/tasks]] — task schema, path, frontmatter contract, CRUD behaviour
+- [[capabilities/slack]] — personal Slack read + send, confirm-before-send, search consent rules
 - [[capabilities/email]] — Not yet documented.
 - [[capabilities/calendar]] — Not yet documented.
 

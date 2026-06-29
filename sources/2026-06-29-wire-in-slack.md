@@ -16,7 +16,7 @@ tags: [slack, mcp, capability, decision]
 
 ## Decision: replace the curl path, don't add alongside
 
-Gary's global `CLAUDE.md` previously defined the secretary's Slack as a **curl against the Slack API** with a token at `~/.claude/skills/slack/.env.ketchup`. The new MCP connector is a separate mechanism. Decision (Gary, 2026-06-29): **replace** — the MCP connector is the only Slack path. The `CLAUDE.md` line was updated to match, so the two no longer contradict.
+Gary's global `CLAUDE.md` previously defined the secretary's Slack as a **curl against the Slack API** with a cached user/bot token. The new MCP connector is a separate mechanism. Decision (Gary, 2026-06-29): **replace** — the MCP connector is the only Slack path. The `CLAUDE.md` line was updated to match, the dead token file was deleted, and the global `slack` skill was rewritten to use the MCP tools (it had been overriding the secretary's routing with the old curl path).
 
 ## Send safety
 

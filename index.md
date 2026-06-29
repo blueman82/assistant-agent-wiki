@@ -8,7 +8,7 @@ Schema and workflows: see `AGENTS.md` in the project directory (`~/Github/assist
 ## Architecture
 
 - [[architecture/overview]] — plumbing/brain split, SDK wiring, session continuity
-- [[architecture/mcp-integrations]] — Gmail, Google Calendar, Chrome extension, mcp-exec
+- [[architecture/mcp-integrations]] — Gmail, Google Calendar, Slack, Chrome extension, mcp-exec
 
 ## Capabilities
 

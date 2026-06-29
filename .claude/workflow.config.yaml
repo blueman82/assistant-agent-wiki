@@ -1,0 +1,7 @@
+project: assistant-agent-wiki
+wiki_path: .                      # this repo IS the wiki; /workflow ingests changes back into these pages
+worktree_base: /Users/harrison/Github  # parent dir of git root
+worktree_script: null
+jira: null
+engineering_principles_paths: null
+engineering_principles_skill: null   # no source code; nothing to lint

@@ -38,7 +38,7 @@ Key tools:
 
 - **Confirm before sending** — never send unprompted. The send flow is draft → confirm → send. (See [[architecture/overview]] ground rules.)
 - **Default to public search.** `slack_search_public` needs no extra consent; `slack_search_public_and_private` (which covers DMs and private channels) requires explicit consent per call, so the secretary asks first.
-- Personal Slack only. This replaced an earlier curl/API path (token at `~/.claude/skills/slack/.env.ketchup`) — see [[sources/2026-06-29-wire-in-slack]].
+- Personal Slack only. This replaced an earlier curl/API token path — see [[sources/2026-06-29-wire-in-slack]].
 - Cannot post to externally shared (Slack Connect) channels.
 
 ## Relationships

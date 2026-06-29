@@ -2,14 +2,14 @@
 title: "MCP Integrations"
 type: architecture
 created: 2026-06-07
-last_updated: 2026-06-07
+last_updated: 2026-06-29
 sources: ["secretary.ts"]
 tags: [architecture, mcp, tools]
 ---
 
 ## Summary
 
-No MCP servers are spawned by the secretary process. All MCP tools come from existing Claude Code connections. Three surfaces are wired in via `allowedTools` in `secretary.ts`.
+No MCP servers are spawned by the secretary process. All MCP tools come from existing Claude Code connections. The surfaces are wired in via `allowedTools` in `secretary.ts`.
 
 ## Tool surfaces
 
@@ -17,6 +17,7 @@ No MCP servers are spawned by the secretary process. All MCP tools come from exi
 |---------|-------------|--------|---------|
 | Gmail | `mcp__claude_ai_Gmail__*` | Claude Code session | Personal email (gjharrison01@gmail.com) |
 | Google Calendar | `mcp__claude_ai_Google_Calendar__*` | Claude Code session | Personal calendar |
+| Slack | `mcp__claude_ai_Slack__*` | Claude Code session | Personal Slack (read + send, confirm before sending) |
 | Chrome extension | `mcp__claude-in-chrome__*` | Browser extension | General browser tasks |
 | mcp-exec | `mcp__mcp-exec__*` | Claude Code session | Playwright fallback, code execution |
 

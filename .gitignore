@@ -1,3 +1,6 @@
 # Obsidian workspace state changes constantly - don't track
 .obsidian/workspace.json
 .obsidian/workspace-mobile.json
+
+# Hook output logs
+logs/

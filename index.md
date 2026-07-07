@@ -16,6 +16,7 @@ Schema and workflows: see `AGENTS.md` in the project directory (`~/Github/assist
 - [[capabilities/slack]] — personal Slack read + send, confirm-before-send, search consent rules
 - [[capabilities/email]] — Not yet documented.
 - [[capabilities/calendar]] — Not yet documented.
+- [[capabilities/send-gate]] — deterministic PreToolUse hook enforcing confirm-before-send on Slack/Calendar
 
 ## Patterns
 

@@ -17,6 +17,7 @@ Schema and workflows: see `AGENTS.md` in the project directory (`~/Github/assist
 - [[capabilities/email]] — Not yet documented.
 - [[capabilities/calendar]] — Not yet documented.
 - [[capabilities/send-gate]] — deterministic PreToolUse hook enforcing confirm-before-send on Slack/Calendar
+- [[capabilities/telegram-frontend]] — Telegram chat front-end onto the secretary; owns the getUpdates loop, single-user only
 
 ## Patterns
 

@@ -3,8 +3,8 @@ title: "Send Gate"
 type: capability
 created: 2026-07-07
 last_updated: 2026-07-07
-sources: ["secretary.ts", "gate/sendGate.ts", "prompts/system.md", "AGENTS.md"]
-tags: [capability, gate, security, slack, calendar]
+sources: ["secretary.ts", "gate/sendGate.ts", "gate/surfaces/telegram.ts", "bridge/telegram-bridge.ts", "prompts/system.md", "AGENTS.md"]
+tags: [capability, gate, security, slack, calendar, telegram]
 ---
 
 ## What it does

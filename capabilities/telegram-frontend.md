@@ -38,7 +38,7 @@ Handled by the bridge before input ever reaches the agent:
 npm run bridge   # tsx bridge/telegram-bridge.ts
 ```
 
-For persistence (survives reboots/crashes): copy `bridge/launchd.plist` to `~/Library/LaunchAgents/com.secretary.telegram-bridge.plist`, replace `__REPO_PATH__` with the absolute path to the checkout, then `launchctl load ~/Library/LaunchAgents/com.secretary.telegram-bridge.plist`. `KeepAlive` restarts the process on crash or on the loud `exit(1)` the bridge performs when Telegram reports a second `getUpdates` consumer (HTTP 409).
+For persistence (survives reboots/crashes): copy `bridge/launchd.plist` to `~/Library/LaunchAgents/com.rachel.telegram-bridge.plist`, replace `__REPO_PATH__` with the absolute path to the checkout, then `launchctl load ~/Library/LaunchAgents/com.rachel.telegram-bridge.plist`. `KeepAlive` restarts the process on crash or on the loud `exit(1)` the bridge performs when Telegram reports a second `getUpdates` consumer (HTTP 409).
 
 ## Reply formatting (plain text, no parse_mode)
 

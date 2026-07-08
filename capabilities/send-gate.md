@@ -32,7 +32,7 @@ Gmail has no send tool (only `create_draft` + read/label/search) — nothing to 
 - **Approval surfaces** (first answer wins): terminal y/n (interactive TTY), Telegram inline Approve/Deny buttons, or the dashboard queue file at `~/.claude/coderails-dashboard/queue/<hash>.json`.
 - **Telegram surface routing**: the Telegram approval surface (`gate/surfaces/telegram.ts`) does not poll Telegram itself — it exposes `handleCallbackQuery`, and the Telegram front-end bridge (`bridge/telegram-bridge.ts`, see [[capabilities/telegram-frontend]]) owns the single `getUpdates` long-poll loop and feeds matching `callback_query` updates into it. A button tap is routed ahead of any queued chat turn, since a gate decision may be blocking a turn already in flight.
 - **Bash defense-in-depth**: a `Bash` command matching a known send-API pattern (Slack `chat.postMessage`, Telegram `sendMessage`, Gmail `messages/send`, a `POST` to the Calendar events endpoint) is denied outright and redirected to the corresponding MCP tool.
-- **Audit**: every attempt and decision is appended to `~/.secretary/send-gate-audit.jsonl`.
+- **Audit**: every attempt and decision is appended to `~/.rachel/send-gate-audit.jsonl`.
 
 ## Constraints / gotchas
 

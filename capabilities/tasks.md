@@ -9,7 +9,7 @@ tags: [capability, tasks]
 
 ## What it does
 
-Manages Gary's task list as flat markdown files. The secretary reads, creates, and updates task files on request. It does not proactively surface tasks at session start — it's reactive.
+Manages Gary's task list as flat markdown files. Rachel reads, creates, and updates task files on request. It does not proactively surface tasks at session start — it's reactive.
 
 ## Tool names
 

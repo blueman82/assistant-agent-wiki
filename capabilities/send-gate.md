@@ -37,8 +37,8 @@ Gmail has no send tool (only `create_draft` + read/label/search) — nothing to 
 ## Constraints / gotchas
 
 - **Accepted residual, not closed**: browser-automation sends (`mcp__claude-in-chrome__*` driving the Slack/Gmail web UI) aren't pattern-matchable and aren't gated. Detection is audit-log-only — a documented tradeoff, not an oversight.
-- **Slack tool-name confirmation is documentation-sourced, not live-introspected** for this gate's build — if the secretary's live Slack tool names ever drift from what's documented, `GATED_TOOL_NAMES` in `gate/sendGate.ts` silently stops matching. Closing this needs a startup-time live schema check or a future hook-probe run.
-- `permissionMode: "auto"` on the secretary's SDK session is a model-classifier mode, not a security boundary — the gate does not rely on it.
+- **Slack tool-name confirmation is documentation-sourced, not live-introspected** for this gate's build — if Rachel's live Slack tool names ever drift from what's documented, `GATED_TOOL_NAMES` in `gate/sendGate.ts` silently stops matching. Closing this needs a startup-time live schema check or a future hook-probe run.
+- `permissionMode: "auto"` on Rachel's SDK session is a model-classifier mode, not a security boundary — the gate does not rely on it.
 
 ## Relationships
 

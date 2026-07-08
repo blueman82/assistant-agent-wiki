@@ -35,12 +35,12 @@ Body text here.
 
 ## How to invoke
 
-- "What's on my task list?" → secretary globs `tasks/` and reads each file
-- "Add a task for X" → secretary writes a new `YYYY-MM-DD-slug.md`
-- "Mark X done" → secretary edits frontmatter `status: done`
+- "What's on my task list?" → Rachel globs `tasks/` and reads each file
+- "Add a task for X" → Rachel writes a new `YYYY-MM-DD-slug.md`
+- "Mark X done" → Rachel edits frontmatter `status: done`
 
 ## Constraints / gotchas
 
-- Secretary won't surface tasks unprompted — no proactive reminder on session start (as of 2026-06-07)
+- Rachel won't surface tasks unprompted — no proactive reminder on session start (as of 2026-06-07)
 - No task inbox: tasks must be explicitly requested or dropped as `.md` files manually
 - The `tasks/` folder only contains a `.gitkeep` — it's empty and tracked in git

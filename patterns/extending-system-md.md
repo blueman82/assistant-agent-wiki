@@ -40,7 +40,7 @@ See [[sources/2026-06-29-wire-in-slack]] for the full change.
 - **Pro**: zero TypeScript required; changes are instant
 - **Pro**: the system prompt is the single source of truth for behaviour
 - **Con**: no validation — a poorly written instruction can confuse the agent without a clear error
-- **Con**: tool availability is still constrained by `allowedTools` in `secretary.ts` — adding a capability that needs a new MCP tool requires a TypeScript change too (see the Slack example above: allowlist entry + prompt section)
+- **Con**: tool availability is still constrained by `allowedTools` in `rachel.ts` — adding a capability that needs a new MCP tool requires a TypeScript change too (see the Slack example above: allowlist entry + prompt section)
 
 ## Relationships
 

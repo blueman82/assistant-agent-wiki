@@ -24,7 +24,7 @@ Sending mirrors the email rule: draft with `slack_send_message_draft`, show Gary
 
 ## Search consent
 
-`slack_search_public` needs no extra consent and is the default. `slack_search_public_and_private` (DMs + private channels) requires explicit consent per call, so the secretary asks before using it.
+`slack_search_public` needs no extra consent and is the default. `slack_search_public_and_private` (DMs + private channels) requires explicit consent per call, so Rachel asks before using it.
 
 ## Impact
 

@@ -3,21 +3,21 @@ title: "Architecture Overview"
 type: architecture
 created: 2026-06-07
 last_updated: 2026-06-07
-sources: ["secretary.ts", "prompts/system.md", "CLAUDE.md"]
+sources: ["rachel.ts", "prompts/system.md", "CLAUDE.md"]
 tags: [architecture, sdk, core]
 ---
 
 ## Summary
 
-The secretary splits cleanly into **plumbing** (`secretary.ts`) and **brain** (`prompts/system.md`). To change what the secretary does, edit the brain. The plumbing rarely needs touching.
+Rachel splits cleanly into **plumbing** (`rachel.ts`) and **brain** (`prompts/system.md`). To change what Rachel does, edit the brain. The plumbing rarely needs touching.
 
 ## Key components
 
-**secretary.ts** (~190 lines)
+**rachel.ts** (~190 lines)
 - Wraps the Agent SDK's `query()` in a REPL loop
 - Loads `prompts/system.md` as the system prompt at startup
 - Streams `assistant` messages (text + tool-use) to stdout
-- Session continuity: captures `session_id` from the SDK `init` message, passes it as `resume` on subsequent turns — this is what makes the secretary remember context across turns in the same session
+- Session continuity: captures `session_id` from the SDK `init` message, passes it as `resume` on subsequent turns — this is what makes Rachel remember context across turns in the same session
 - `/reset` clears `sessionId`, starting a fresh session
 - `q` mid-turn aborts via `AbortController`
 

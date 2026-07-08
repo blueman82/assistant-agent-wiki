@@ -3,7 +3,7 @@ title: "Wire in personal Slack"
 type: source
 origin: "branch wire-in-slack (assistant-agent)"
 created: 2026-06-29
-last_updated: 2026-06-29
+last_updated: 2026-07-08
 sources: ["rachel.ts", "prompts/system.md", "CLAUDE.md"]
 tags: [slack, mcp, capability, decision]
 ---

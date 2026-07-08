@@ -24,7 +24,7 @@ Structure to follow:
 
 Adding the Slack capability (2026-06-29) — the two-part change in practice:
 
-1. **Allowlist (TypeScript)** — `secretary.ts`, one line: add `"mcp__claude_ai_Slack__*"` to `allowedTools`. This is the *can it touch the tool* grant.
+1. **Allowlist (TypeScript)** — `rachel.ts`, one line: add `"mcp__claude_ai_Slack__*"` to `allowedTools`. This is the *can it touch the tool* grant.
 2. **Prompt (markdown)** — `prompts/system.md`, a routing line + a `### Slack (via MCP)` section: which tools, read vs send, and the draft→confirm→send rule. This is the *how and when*.
 
 ```markdown

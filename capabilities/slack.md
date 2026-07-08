@@ -3,17 +3,17 @@ title: "Slack Capability"
 type: capability
 created: 2026-06-29
 last_updated: 2026-06-29
-sources: ["prompts/system.md", "secretary.ts"]
+sources: ["prompts/system.md", "rachel.ts"]
 tags: [capability, slack, mcp]
 ---
 
 ## What it does
 
-Reads and sends messages on Gary's **personal** Slack via the claude.ai Slack MCP connector. Sending is gated: the secretary drafts, Gary confirms, then it sends — same rule as email.
+Reads and sends messages on Gary's **personal** Slack via the claude.ai Slack MCP connector. Sending is gated: Rachel drafts, Gary confirms, then it sends — same rule as email.
 
 ## Tool names
 
-`mcp__claude_ai_Slack__*` (claude.ai Slack connector, same family as Gmail/Calendar). Granted via `allowedTools` in `secretary.ts`.
+`mcp__claude_ai_Slack__*` (claude.ai Slack connector, same family as Gmail/Calendar). Granted via `allowedTools` in `rachel.ts`.
 
 Key tools:
 

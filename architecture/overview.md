@@ -40,3 +40,4 @@ One long-lived process, one session. `sessionId` is set on the first turn's `ini
 
 - [[architecture/mcp-integrations]] — which tools the agent can call
 - [[patterns/extending-system-md]] — how to safely evolve the brain
+- [[capabilities/telegram-frontend]] — consumer of the typed emit channel that filters replies to text-only

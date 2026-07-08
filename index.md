@@ -30,5 +30,5 @@ Schema and workflows: see `AGENTS.md` in the project directory (`~/Github/assist
 ## Sources
 
 - [[sources/karpathy-llm-wiki]] — the LLM wiki pattern this knowledge base is based on
-- [[sources/2026-06-29-wire-in-slack]] — wiring personal Slack into the secretary (replace-not-add decision)
+- [[sources/2026-06-29-wire-in-slack]] — wiring personal Slack into Rachel (replace-not-add decision)
 - [[sources/2026-07-08-telegram-reply-formatting]] — Telegram reply markdown-stripping fix and the parse_mode rejection rationale

@@ -40,6 +40,14 @@ npm run bridge   # tsx bridge/telegram-bridge.ts
 
 For persistence (survives reboots/crashes): copy `bridge/launchd.plist` to `~/Library/LaunchAgents/com.rachel.telegram-bridge.plist`, replace `__REPO_PATH__` with the absolute path to the checkout, then `launchctl load ~/Library/LaunchAgents/com.rachel.telegram-bridge.plist`. `KeepAlive` restarts the process on crash or on the loud `exit(1)` the bridge performs when Telegram reports a second `getUpdates` consumer (HTTP 409).
 
+## Reply-content contract (typed emit channel)
+
+`rachel.ts`'s `runTurn` emits every line of turn output tagged with a `TurnEmitKind`: `"text"` (the model's own reply text), `"tool"` (a tool-use echo like `  [Read] path/to/file`), or `"meta"` (the `[Rachel] done turns=N cost=$X` completion footer). The type is `TurnEmit = (line: string, kind: TurnEmitKind) => void`.
+
+The terminal REPL prints every kind unchanged — tool echoes and the cost footer stay visible to the operator at the terminal. `bridge/telegram-bridge.ts` buffers **only** `kind === "text"` lines for the Telegram reply, so tool echoes and the turn footer no longer leak to Gary's phone. This means a Telegram reply is composed of exactly: the model's own text blocks, plus two things that bypass the buffer entirely — the bridge's own `"[Rachel] error: ..."` line (pushed directly on a thrown turn, not routed through `emit`) and the `"(no output)"` fallback (fires when a turn yields no text lines at all, so a reply is never silently empty).
+
+The filter is structural — it switches on the typed `kind` field, never on regex/pattern-matching over line content. This was a deliberate fix for the previous behaviour (see [[sources/2026-07-08-telegram-emit-channel]]): before this change, `runTurn` emitted a flat, untyped stream and the bridge forwarded all of it, so tool-use summaries and the done/cost footer leaked into Telegram replies alongside the model's actual answer.
+
 ## Reply formatting (plain text, no parse_mode)
 
 Telegram messages are sent with no `parse_mode`, and `prompts/system.md`'s ground rules now say so explicitly: **"Plain text replies"** — replies are read in Telegram and the terminal REPL, not a markdown renderer, so the model should write plain conversational text (no headers, no bold/italic markers, no tables, no code fences unless quoting actual code; simple hyphen bullets are fine).

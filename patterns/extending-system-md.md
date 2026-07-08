@@ -3,17 +3,17 @@ title: "Extending system.md"
 type: pattern
 created: 2026-06-07
 last_updated: 2026-06-29
-sources: ["prompts/system.md", "CLAUDE.md", "secretary.ts"]
+sources: ["prompts/system.md", "CLAUDE.md", "rachel.ts"]
 tags: [pattern, system-prompt, behaviour]
 ---
 
 ## Problem
 
-You want to change how the secretary behaves — new capability, different routing, new ground rule — without breaking existing behaviour or touching TypeScript.
+You want to change how Rachel behaves — new capability, different routing, new ground rule — without breaking existing behaviour or touching TypeScript.
 
 ## Approach
 
-Edit `prompts/system.md` only. The file is loaded fresh on every `secretary.ts` startup, so changes take effect immediately on the next run. No rebuild, no restart of a server — just save and re-run.
+Edit `prompts/system.md` only. The file is loaded fresh on every `rachel.ts` startup, so changes take effect immediately on the next run. No rebuild, no restart of a server — just save and re-run.
 
 Structure to follow:
 1. Add a new `### Section` under `## Capabilities and how to use them`

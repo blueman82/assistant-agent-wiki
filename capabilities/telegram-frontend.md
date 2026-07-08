@@ -74,3 +74,4 @@ That prompt rule is the primary fix but not the only one. `bridge/api.ts` export
 
 - [[capabilities/send-gate]] — the approval surface whose callback delivery this bridge owns
 - [[architecture/overview]] — plumbing/brain split; the bridge is a second thin plumbing layer on top of the same `runTurn`
+- [[sources/2026-07-08-telegram-emit-channel]] — the PR that introduced the typed `TurnEmitKind` channel

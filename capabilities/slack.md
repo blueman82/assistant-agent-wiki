@@ -2,7 +2,7 @@
 title: "Slack Capability"
 type: capability
 created: 2026-06-29
-last_updated: 2026-06-29
+last_updated: 2026-07-08
 sources: ["prompts/system.md", "rachel.ts"]
 tags: [capability, slack, mcp]
 ---

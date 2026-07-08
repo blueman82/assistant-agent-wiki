@@ -3,15 +3,15 @@ title: "Telegram Front-End"
 type: capability
 created: 2026-07-07
 last_updated: 2026-07-08
-sources: ["bridge/telegram-bridge.ts", "bridge/api.ts", "bridge/launchd.plist", "secretary.ts", "gate/surfaces/telegram.ts", "prompts/system.md", "CLAUDE.md", "AGENTS.md"]
+sources: ["bridge/telegram-bridge.ts", "bridge/api.ts", "bridge/launchd.plist", "rachel.ts", "gate/surfaces/telegram.ts", "prompts/system.md", "CLAUDE.md", "AGENTS.md"]
 tags: [capability, telegram, bridge, front-end]
 ---
 
 ## What it does
 
-A second front-end onto the same secretary, alongside the terminal REPL. `bridge/telegram-bridge.ts` forwards Gary's Telegram chat messages into the same turn loop (`runTurn`, exported from `secretary.ts`) the terminal uses, and relays replies back as chunked Telegram messages (Telegram caps a single message at 4096 characters). Session continuity, tool access, and agent behaviour are identical to the terminal — only the transport differs.
+A second front-end onto the same Rachel, alongside the terminal REPL. `bridge/telegram-bridge.ts` forwards Gary's Telegram chat messages into the same turn loop (`runTurn`, exported from `rachel.ts`) the terminal uses, and relays replies back as chunked Telegram messages (Telegram caps a single message at 4096 characters). Session continuity, tool access, and agent behaviour are identical to the terminal — only the transport differs.
 
-Single-user: the bridge only accepts messages and approval-button taps from Gary's own configured Telegram chat/user ID (`~/.secretary/telegram.json` or `SECRETARY_TELEGRAM_TOKEN`/`SECRETARY_TELEGRAM_CHAT_ID`). Anything else is logged and dropped — there is exactly one authorised operator, no multi-user routing.
+Single-user: the bridge only accepts messages and approval-button taps from Gary's own configured Telegram chat/user ID (`~/.rachel/telegram.json` or `RACHEL_TELEGRAM_TOKEN`/`RACHEL_TELEGRAM_CHAT_ID`). Anything else is logged and dropped — there is exactly one authorised operator, no multi-user routing.
 
 ## Update-routing (the ownership split)
 

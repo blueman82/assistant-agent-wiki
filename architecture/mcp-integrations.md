@@ -2,7 +2,7 @@
 title: "MCP Integrations"
 type: architecture
 created: 2026-06-07
-last_updated: 2026-06-29
+last_updated: 2026-07-08
 sources: ["rachel.ts"]
 tags: [architecture, mcp, tools]
 ---

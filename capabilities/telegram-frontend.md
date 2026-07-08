@@ -4,7 +4,7 @@ type: capability
 created: 2026-07-07
 last_updated: 2026-07-08
 sources: ["bridge/telegram-bridge.ts", "bridge/api.ts", "bridge/launchd.plist", "rachel.ts", "gate/surfaces/telegram.ts", "prompts/system.md", "CLAUDE.md", "AGENTS.md"]
-tags: [capability, telegram, bridge, front-end, emit-channel]
+tags: [capability, telegram, bridge, front-end, emit-channel, image-reception]
 ---
 
 ## What it does
@@ -63,6 +63,30 @@ That prompt rule is the primary fix but not the only one. `bridge/api.ts` export
 
 **Design decision — no `parse_mode`, ever.** Sending with `parse_mode: HTML` or `MarkdownV2` was considered and rejected: a single malformed entity in the reply causes Telegram to reject the whole `sendMessage` call with an HTTP 400, silently losing the message. Deterministic string stripping can't fail that way — worst case is over-aggressive stripping of a literal asterisk, never a lost reply. Same reasoning ruled out wrapping replies in a structured JSON envelope. Belt-and-braces: the prompt rule is meant to stop markdown at the source; the sanitiser is the backstop for when the model writes it anyway.
 
+## Image reception (PR #17)
+
+Gary can send photos or image documents to Rachel via Telegram. The bridge detects these and forwards them as a synthetic text turn.
+
+**Photo messages**: Telegram sends a `photo` array of multiple compressed variants. The bridge picks the last (largest) entry — `photo[photo.length - 1]` — uses its `file_id`, and derives a `.jpg` extension.
+
+**Image document messages**: Documents with `mime_type` starting with `image/` are accepted. The extension is derived from the document's `file_name` (dot-split) or from the MIME type if no filename is present. Non-image documents (any other MIME) receive an immediate reply: "I can only receive images. Try sending a JPEG, PNG, etc." — `runTurn` is never called.
+
+**Download flow**:
+1. `bridge/api.ts`'s `downloadFile(config, fileId, destPath)` calls Telegram's `getFile` API to resolve a download URL.
+2. The URL is constructed and consumed entirely inside `downloadFile` — it is never returned or logged (bot token stays internal; `redact()` covers error paths).
+3. If Telegram returns no `file_path` (e.g. file >20 MB), a clear error is thrown: "file may exceed the 20 MB API limit".
+4. The file is streamed to `~/.rachel/tmp/<fileId>.<ext>` (directory created on first use).
+5. `downloadFileFn` is injectable via `CreateBridgeOptions` so tests never touch the filesystem or network.
+
+**FIFO input format**: After download the bridge pushes `[image: /absolute/path/to/file.jpg]` (with caption appended on a new line if present) into the turn FIFO, exactly like a text message.
+
+**Rachel's response contract**: `prompts/system.md` now instructs Rachel:
+> When a message begins with `[image: <path>]`, always call the `Read` tool on that absolute path to view the image, then respond based on what you see.
+
+**Known debt**:
+- Temp files in `~/.rachel/tmp/` are never cleaned up — the directory grows over time. No cleanup is scheduled.
+- No abort signal is threaded into `downloadFile` — a hung Telegram CDN will stall the entire poll loop until Node's default fetch times out.
+
 ## Constraints / gotchas
 
 - **One consumer only.** A second process polling `getUpdates` on the same bot token causes Telegram to reject both — the bridge detects the resulting 409/conflict, exits loud, and relies on launchd's `KeepAlive` to restart it. Never run two bridge instances (or a bridge alongside an ad hoc polling script) against the same token.
@@ -75,3 +99,4 @@ That prompt rule is the primary fix but not the only one. `bridge/api.ts` export
 - [[capabilities/send-gate]] — the approval surface whose callback delivery this bridge owns
 - [[architecture/overview]] — plumbing/brain split; the bridge is a second thin plumbing layer on top of the same `runTurn`
 - [[sources/2026-07-08-telegram-emit-channel]] — the PR that introduced the typed `TurnEmitKind` channel
+- [[sources/2026-07-08-telegram-image-reception]] — PR #17: image reception implementation, security decisions, known debt

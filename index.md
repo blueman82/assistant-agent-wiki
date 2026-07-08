@@ -17,7 +17,7 @@ Schema and workflows: see `AGENTS.md` in the project directory (`~/Github/assist
 - [[capabilities/email]] — Not yet documented.
 - [[capabilities/calendar]] — Not yet documented.
 - [[capabilities/send-gate]] — deterministic PreToolUse hook enforcing confirm-before-send on Slack/Calendar
-- [[capabilities/telegram-frontend]] — Telegram chat front-end onto Rachel; owns the getUpdates loop, single-user only, strips markdown from replies (no parse_mode)
+- [[capabilities/telegram-frontend]] — Telegram chat front-end onto Rachel; owns the getUpdates loop, single-user only, strips markdown from replies (no parse_mode); receives photos and image documents (PR #17)
 
 ## Patterns
 
@@ -34,3 +34,4 @@ Schema and workflows: see `AGENTS.md` in the project directory (`~/Github/assist
 - [[sources/2026-07-08-telegram-reply-formatting]] — Telegram reply markdown-stripping fix and the parse_mode rejection rationale
 - [[sources/2026-07-08-rachel-rebrand]] — secretary → Rachel rebrand (naming only, no behaviour change)
 - [[sources/2026-07-08-telegram-emit-channel]] — typed emit channel (text/tool/meta) keeps tool echoes and the done footer out of Telegram replies
+- [[sources/2026-07-08-telegram-image-reception]] — PR #17: Rachel can now receive photos and image documents via Telegram

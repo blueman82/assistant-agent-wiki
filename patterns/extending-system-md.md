@@ -2,7 +2,7 @@
 title: "Extending system.md"
 type: pattern
 created: 2026-06-07
-last_updated: 2026-06-29
+last_updated: 2026-07-08
 sources: ["prompts/system.md", "CLAUDE.md", "rachel.ts"]
 tags: [pattern, system-prompt, behaviour]
 ---

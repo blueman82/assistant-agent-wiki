@@ -33,3 +33,4 @@ Schema and workflows: see `AGENTS.md` in the project directory (`~/Github/assist
 - [[sources/2026-06-29-wire-in-slack]] — wiring personal Slack into Rachel (replace-not-add decision)
 - [[sources/2026-07-08-telegram-reply-formatting]] — Telegram reply markdown-stripping fix and the parse_mode rejection rationale
 - [[sources/2026-07-08-rachel-rebrand]] — secretary → Rachel rebrand (naming only, no behaviour change)
+- [[sources/2026-07-08-telegram-emit-channel]] — typed emit channel (text/tool/meta) keeps tool echoes and the done footer out of Telegram replies

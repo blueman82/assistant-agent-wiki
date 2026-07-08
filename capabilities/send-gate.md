@@ -3,13 +3,13 @@ title: "Send Gate"
 type: capability
 created: 2026-07-07
 last_updated: 2026-07-07
-sources: ["secretary.ts", "gate/sendGate.ts", "gate/surfaces/telegram.ts", "bridge/telegram-bridge.ts", "prompts/system.md", "AGENTS.md"]
+sources: ["rachel.ts", "gate/sendGate.ts", "gate/surfaces/telegram.ts", "bridge/telegram-bridge.ts", "prompts/system.md", "AGENTS.md"]
 tags: [capability, gate, security, slack, calendar, telegram]
 ---
 
 ## What it does
 
-A `PreToolUse` hook in `secretary.ts` (`gate/sendGate.ts`) intercepts every call to a gated (send-class) tool and blocks it until an approval surface resolves. This is the deterministic enforcement floor beneath the prompt-level draft-first rules in `prompts/system.md` — those rules remain the UX contract, not the only enforcement. There's no talking the agent around it: even if a send tool is called without asking Gary first, the gate still blocks and waits.
+A `PreToolUse` hook in `rachel.ts` (`gate/sendGate.ts`) intercepts every call to a gated (send-class) tool and blocks it until an approval surface resolves. This is the deterministic enforcement floor beneath the prompt-level draft-first rules in `prompts/system.md` — those rules remain the UX contract, not the only enforcement. There's no talking the agent around it: even if a send tool is called without asking Gary first, the gate still blocks and waits.
 
 ## Tool names
 

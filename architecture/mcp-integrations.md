@@ -3,13 +3,13 @@ title: "MCP Integrations"
 type: architecture
 created: 2026-06-07
 last_updated: 2026-06-29
-sources: ["secretary.ts"]
+sources: ["rachel.ts"]
 tags: [architecture, mcp, tools]
 ---
 
 ## Summary
 
-No MCP servers are spawned by the secretary process. All MCP tools come from existing Claude Code connections. The surfaces are wired in via `allowedTools` in `secretary.ts`.
+No MCP servers are spawned by the Rachel process. All MCP tools come from existing Claude Code connections. The surfaces are wired in via `allowedTools` in `rachel.ts`.
 
 ## Tool surfaces
 

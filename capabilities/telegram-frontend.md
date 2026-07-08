@@ -40,11 +40,26 @@ npm run bridge   # tsx bridge/telegram-bridge.ts
 
 For persistence (survives reboots/crashes): copy `bridge/launchd.plist` to `~/Library/LaunchAgents/com.secretary.telegram-bridge.plist`, replace `__REPO_PATH__` with the absolute path to the checkout, then `launchctl load ~/Library/LaunchAgents/com.secretary.telegram-bridge.plist`. `KeepAlive` restarts the process on crash or on the loud `exit(1)` the bridge performs when Telegram reports a second `getUpdates` consumer (HTTP 409).
 
+## Reply formatting (plain text, no parse_mode)
+
+Telegram messages are sent with no `parse_mode`, and `prompts/system.md`'s ground rules now say so explicitly: **"Plain text replies"** — replies are read in Telegram and the terminal REPL, not a markdown renderer, so the model should write plain conversational text (no headers, no bold/italic markers, no tables, no code fences unless quoting actual code; simple hyphen bullets are fine).
+
+That prompt rule is the primary fix but not the only one. `bridge/api.ts` exports a deterministic sanitiser, `stripMarkdown(text)`, wired into `sendChunked` and run on the full reply **before** chunking (so a marker straddling the 4096-char boundary can't leak half-stripped):
+
+- Strips leading `#`–`######` header hashes at line start.
+- Converts `[text](url)` to `text (url)`.
+- Strips `**bold**`, `*italic*`, and `__double-underscore__` markers, keeping their content. Single underscores are never treated as markers by design — only doubled `__pairs__` are — so `snake_case` identifiers and underscore-bearing URLs pass through untouched.
+- Strips inline `` `backticks` ``, keeping their content.
+- Fenced ` ```code blocks``` ` are split out first and passed through byte-identical — hashes, asterisks, and backticks inside a fence are never touched, since the plain-text rule already permits fences for real code.
+- The emphasis regexes use a `(?<!\w)` lookbehind plus non-whitespace content anchors, so spaced maths (`2 * 3`), unspaced arithmetic (`3*4=12`), and `snake_case` all survive without being read as emphasis markers.
+
+**Design decision — no `parse_mode`, ever.** Sending with `parse_mode: HTML` or `MarkdownV2` was considered and rejected: a single malformed entity in the reply causes Telegram to reject the whole `sendMessage` call with an HTTP 400, silently losing the message. Deterministic string stripping can't fail that way — worst case is over-aggressive stripping of a literal asterisk, never a lost reply. Same reasoning ruled out wrapping replies in a structured JSON envelope. Belt-and-braces: the prompt rule is meant to stop markdown at the source; the sanitiser is the backstop for when the model writes it anyway.
+
 ## Constraints / gotchas
 
 - **One consumer only.** A second process polling `getUpdates` on the same bot token causes Telegram to reject both — the bridge detects the resulting 409/conflict, exits loud, and relies on launchd's `KeepAlive` to restart it. Never run two bridge instances (or a bridge alongside an ad hoc polling script) against the same token.
 - **Log redaction.** `bridge/api.ts`'s `redact()` strips the bot token from every URL before it reaches a log line or thrown error — launchd persists `.secretary/telegram-bridge.log` to disk, so this must run on every logged path, not just the happy path.
-- **Chunking boundary.** Replies over 4096 characters are split preferring the last newline at-or-before the boundary (falls back to a hard cut, nudged off a UTF-16 surrogate-pair boundary if one lands there).
+- **Chunking boundary.** Replies over 4096 characters are split preferring the last newline at-or-before the boundary (falls back to a hard cut, nudged off a UTF-16 surrogate-pair boundary if one lands there). Markdown stripping runs on the whole reply before this split, not per-chunk.
 - **No new runtime deps.** The Telegram client (`bridge/api.ts`) is plain `fetch` — no SDK.
 
 ## Relationships

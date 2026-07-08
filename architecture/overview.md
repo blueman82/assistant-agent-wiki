@@ -33,8 +33,8 @@ One long-lived process, one session. `sessionId` is set on the first turn's `ini
 
 | Variable | Default | Effect |
 |----------|---------|--------|
-| `SECRETARY_MODEL` | `claude-sonnet-4-6` | Model |
-| `SECRETARY_MAX_TURNS` | `200` | Max agent turns per request |
+| `RACHEL_MODEL` | `claude-sonnet-4-6` | Model |
+| `RACHEL_MAX_TURNS` | `200` | Max agent turns per request |
 
 ## Relationships
 

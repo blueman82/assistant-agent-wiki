@@ -27,7 +27,7 @@ Terminal REPL only in practice. The Telegram bridge filters the emit channel to 
 
 ## State at ingest
 
-Change verified by `npm run typecheck` and `npm test` (107/107 pass + probe suite). Working-tree change on branch `fix/bridge-409-backoff`, not yet committed or merged at time of ingest.
+Change verified by `npm run typecheck` and `npm test` (107/107 pass + probe suite). Committed as `0f9d5da` on branch `fix/bridge-409-backoff` (auto-commit hook), not merged at time of ingest. Per the 2026-07-14 coordination agreement, that branch is slated to be closed unmerged (superseded by the bridge self-monitoring PR) and `0f9d5da` re-raised separately — this change rides on that re-raise.
 
 ## Relationships
 

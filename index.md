@@ -17,7 +17,7 @@ Schema and workflows: see `AGENTS.md` in the project directory (`~/Github/assist
 - [[capabilities/email]] — Not yet documented.
 - [[capabilities/calendar]] — Not yet documented.
 - [[capabilities/send-gate]] — deterministic PreToolUse hook enforcing confirm-before-send on Slack/Calendar
-- [[capabilities/telegram-frontend]] — Telegram chat front-end onto Rachel; owns the getUpdates loop, single-user only, strips markdown from replies (no parse_mode); receives photos and image documents (PR #17)
+- [[capabilities/telegram-frontend]] — Telegram chat front-end onto Rachel; owns the getUpdates loop, single-user only, strips markdown from replies (no parse_mode); receives photos and image documents (PR #17); self-monitors via a health state machine with 409 backoff, fetch timeout, and startup alert (PRs #21 + #22)
 
 ## Patterns
 

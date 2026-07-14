@@ -38,3 +38,4 @@ Schema and workflows: see `AGENTS.md` in the project directory (`~/Github/assist
 - [[sources/2026-07-08-telegram-image-reception]] — PR #17: Rachel can now receive photos and image documents via Telegram
 - [[sources/2026-07-14-terminal-tool-echo-truncation]] — removed the 100-char cap on terminal tool-use echoes in rachel.ts (terminal-only; Telegram unaffected)
 - [[sources/2026-07-14-bridge-self-monitoring]] — PRs #21 + #22: bridge health state machine (409 backoff, threshold-5 exit), fetch timeout, and startup alert
+- [[sources/2026-07-14-inbox-brief]] — PR #23: recommend-only Gmail sweep + `bridge/notify.ts` standalone Telegram sender for headless one-shot runs

@@ -43,4 +43,4 @@ Body text here.
 
 - Rachel won't surface tasks unprompted — no proactive reminder on session start (as of 2026-06-07)
 - No task inbox: tasks must be explicitly requested or dropped as `.md` files manually
-- The `tasks/` folder only contains a `.gitkeep` — it's empty and tracked in git
+- The `tasks/` folder holds a tracked `.gitkeep` plus any live task files (e.g. `launch-model-routing-loop.md`, `salience-cue-experiment-readout.md` as of 2026-07-14). Note: those live files don't follow the documented `YYYY-MM-DD-slug.md` naming — the convention above is the intended format, not an enforced one

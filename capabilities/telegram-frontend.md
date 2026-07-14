@@ -109,6 +109,10 @@ The bridge watches its own health so a failure surfaces on Telegram, instead of 
 
 See [[sources/2026-07-14-bridge-self-monitoring]] for the full design and rationale.
 
+## Standalone outbound path for headless runs (`bridge/notify.ts`)
+
+Not part of this bridge — a separate, standalone sender for a different execution mode. A headless one-shot `bin/rachel` invocation (launchd job, or a dashboard button) never starts this bridge's inbound loop, so it has no reply path to Telegram at all: its ordinary text output only reaches stdout/a log. `bridge/notify.ts` covers that gap by reusing `bridge/api.ts`'s `sendChunked` directly — no polling, no FIFO, no `callback_query` handling, just a one-shot send to whatever chat `loadTelegramConfig()` resolves. First consumer: [[capabilities/inbox-brief]]. See [[sources/2026-07-14-inbox-brief]] for the full design (why it reads the message from a file rather than argv, and why it's deliberately ungated — [[capabilities/send-gate]]).
+
 ## Constraints / gotchas
 
 - **One consumer only.** A second process polling `getUpdates` on the same bot token causes Telegram to reply `409 Conflict`. The bridge no longer exits on the first 409 — it enters the `conflict` health state, backs off 65s, and retries, exiting (to be restarted by launchd) only after 5 consecutive 409s (~5 min = a genuine second consumer, not a launchd restart race). See [[#Self-monitoring (PR #21 + #22)]]. Never run two bridge instances (or a bridge alongside an ad hoc polling script) against the same token.

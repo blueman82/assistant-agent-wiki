@@ -17,6 +17,7 @@ Rachel splits cleanly into **plumbing** (`rachel.ts`) and **brain** (`prompts/sy
 - Wraps the Agent SDK's `query()` in a REPL loop
 - Loads `prompts/system.md` as the system prompt at startup
 - `runTurn` streams turn output via a typed emit channel: `TurnEmit = (line, kind) => void`, where `kind` is `"text"` | `"tool"` | `"meta"` — model text, tool-use echoes, and the done/cost footer respectively. The terminal REPL prints every kind; `bridge/telegram-bridge.ts` filters to `"text"` only (see [[capabilities/telegram-frontend]])
+- Tool-use echoes (`kind: "tool"`) print in full — Bash commands and JSON tool inputs are no longer capped at 100 chars (cap removed 2026-07-14 after Gary hit truncated terminal output; see [[sources/2026-07-14-terminal-tool-echo-truncation]]). File-path summaries (Read/Write/Edit) were never truncated
 - Session continuity: captures `session_id` from the SDK `init` message, passes it as `resume` on subsequent turns — this is what makes Rachel remember context across turns in the same session
 - `/reset` clears `sessionId`, starting a fresh session
 - `q` mid-turn aborts via `AbortController`

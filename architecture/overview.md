@@ -30,6 +30,8 @@ Rachel splits cleanly into **plumbing** (`rachel.ts`) and **brain** (`prompts/sy
 
 One long-lived process, one session. `sessionId` is set on the first turn's `init` message and reused for all subsequent turns until `/reset` or process exit.
 
+**Headless one-shot mode.** `bin/rachel "<prompt>" < /dev/null` runs a single turn and exits cleanly on its own — closed stdin means the REPL's `rl.question` hits EOF immediately after the turn completes, no `KeepAlive` process manager needed. Used by launchd-scheduled jobs (e.g. `tasks/inbox-brief-launchd.plist`, see [[capabilities/inbox-brief]]) and dashboard buttons. This mode has no bridge/REPL loop in front of it, so its ordinary text-reply path only reaches stdout — anything that needs to proactively reach Telegram from a one-shot run uses the standalone `bridge/notify.ts` sender instead of the normal reply path (see [[capabilities/telegram-frontend]]).
+
 ## Config
 
 | Variable | Default | Effect |

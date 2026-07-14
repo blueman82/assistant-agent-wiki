@@ -89,7 +89,7 @@ Gary can send photos or image documents to Rachel via Telegram. The bridge detec
 
 ## Constraints / gotchas
 
-- **One consumer only.** A second process polling `getUpdates` on the same bot token causes Telegram to reject both — the bridge detects the resulting 409/conflict, exits loud, and relies on launchd's `KeepAlive` to restart it. Never run two bridge instances (or a bridge alongside an ad hoc polling script) against the same token.
+- **One consumer only.** A second process polling `getUpdates` on the same bot token causes Telegram to reply `409 Conflict`. The bridge no longer exits on the first 409 — it enters the `conflict` health state, backs off 65s, and retries, exiting (to be restarted by launchd) only after 5 consecutive 409s (~5 min = a genuine second consumer, not a launchd restart race). See [[#Self-monitoring (PR #21 + #22)]]. Never run two bridge instances (or a bridge alongside an ad hoc polling script) against the same token.
 - **Log redaction.** `bridge/api.ts`'s `redact()` strips the bot token from every URL before it reaches a log line or thrown error — launchd persists `.rachel/telegram-bridge.log` to disk, so this must run on every logged path, not just the happy path.
 - **Chunking boundary.** Replies over 4096 characters are split preferring the last newline at-or-before the boundary (falls back to a hard cut, nudged off a UTF-16 surrogate-pair boundary if one lands there). Markdown stripping runs on the whole reply before this split, not per-chunk.
 - **No new runtime deps.** The Telegram client (`bridge/api.ts`) is plain `fetch` — no SDK.

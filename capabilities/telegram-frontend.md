@@ -127,3 +127,5 @@ Not part of this bridge — a separate, standalone sender for a different execut
 - [[sources/2026-07-08-telegram-emit-channel]] — the PR that introduced the typed `TurnEmitKind` channel
 - [[sources/2026-07-08-telegram-image-reception]] — PR #17: image reception implementation, security decisions, known debt
 - [[sources/2026-07-14-bridge-self-monitoring]] — PRs #21 + #22: bridge health state machine, 409 backoff, fetch timeout, startup alert
+- [[capabilities/inbox-brief]] — first consumer of the standalone `notify.ts` outbound path
+- [[sources/2026-07-14-inbox-brief]] — PR #23: `notify.ts` design and rationale

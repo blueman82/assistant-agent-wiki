@@ -2,8 +2,8 @@
 title: "Tasks Capability"
 type: capability
 created: 2026-06-07
-last_updated: 2026-07-08
-sources: ["prompts/system.md", "tasks/.gitkeep"]
+last_updated: 2026-07-14
+sources: ["prompts/system.md", "tasks/"]
 tags: [capability, tasks]
 ---
 

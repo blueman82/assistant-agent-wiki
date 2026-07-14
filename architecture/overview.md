@@ -2,7 +2,7 @@
 title: "Architecture Overview"
 type: architecture
 created: 2026-06-07
-last_updated: 2026-07-08
+last_updated: 2026-07-14
 sources: ["rachel.ts", "prompts/system.md", "CLAUDE.md"]
 tags: [architecture, sdk, core]
 ---

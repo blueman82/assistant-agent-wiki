@@ -87,6 +87,28 @@ Gary can send photos or image documents to Rachel via Telegram. The bridge detec
 - Temp files in `~/.rachel/tmp/` are never cleaned up — the directory grows over time. No cleanup is scheduled.
 - No abort signal is threaded into `downloadFile` — a hung Telegram CDN will stall the entire poll loop until Node's default fetch times out.
 
+## Self-monitoring (PR #21 + #22)
+
+The bridge watches its own health so a failure surfaces on Telegram, instead of only being noticed when Rachel goes quiet. `run()` in `bridge/telegram-bridge.ts` tracks a three-state health machine and alerts Gary on state **transitions only** — never per-error, so an outage can't spam his phone.
+
+**Health states.** `BridgeHealth = "healthy" | "conflict" | "failed"`, starting `healthy`.
+
+- **`conflict`** — entered on a `409 Conflict` from `getUpdates` (a second consumer holds the single-consumer lock). One alert fires on entry. The bridge backs off `CONFLICT_BACKOFF_MS` (65s) and retries. Only after `CONFLICT_EXIT_THRESHOLD` (5) **consecutive** 409s (~5 min) does it `process.exit(1)` for launchd to restart. The FATAL exit alert is **`await`ed** before the exit — a fire-and-forget send would be killed by `process.exit` before the HTTP request completes.
+- **`failed`** — entered on any non-409 poll error. One alert on entry. A non-conflict error resets the 409 streak.
+- **recovery** — a successful poll from any unhealthy state returns to `healthy` and fires one recovery alert.
+
+**Why 65s / threshold 5, not exit-on-first-409.** The old handler did `process.exit(1)` on the first 409, and launchd's `KeepAlive` restarted in ~1s — faster than Telegram releases the `getUpdates` lock (~30-60s). That produced an infinite self-conflict crash loop, invisible until someone noticed Rachel wasn't responding. 65s clears the lock-release window with margin; threshold-5 distinguishes a launchd restart race (self-resolves) from a genuine second consumer. `launchd.plist`'s `ThrottleInterval: 60` is belt-and-suspenders so a future regression can't recreate the fast-restart loop.
+
+**`/status` health reporting.** `/status` now reports `health: <state>` and, when the bridge has been unhealthy, `last error: <msg> (<ts>, recovered|ongoing)` — so a past or ongoing problem is visible on demand, not just at the moment it happened.
+
+**Fetch timeout (PR #22, gap 1).** `bridge/api.ts`'s `tg()` passes `signal: AbortSignal.timeout(config.requestTimeoutMs ?? 45_000)` to the transport. **Why:** a wedged getUpdates long-poll (network drop without RST, sleep/wake) previously never returned and never threw — so the health machine, which assumes failures throw, never fired and the bridge looked `healthy` while dead. 45s is deliberately longer than the 30s server-side long-poll (`timeout=30`) so a valid slow poll is never aborted, but short enough to catch a genuine hang. The abort surfaces as a thrown error the `failed`-state path handles, turning an invisible hang into an observable alert.
+
+**Startup alert (PR #22, gap 2).** `run()` fires a one-time best-effort `sendChunked(config, "Rachel bridge started.").catch(() => {})` after `setMyCommands`, before the poll loop. **Why:** the FATAL 409 exit was the *only* exit that alerted. Any other death (OOM, reboot, uncaught exception, `launchctl bootout`, the gap-1 timeout crash) sends nothing, because dead processes can't — and the restarted process boots silently `healthy` with `lastError = null`. The next boot announcing itself is the only signal a non-409 crash-restart loop leaves. It does **not** `await` (unlike the FATAL-exit alert) — the process is continuing into the poll loop, not exiting — and its `.catch(() => {})` means a failed startup alert never blocks or crashes boot.
+
+**Testability.** `conflictBackoffMs` is injectable via `CreateBridgeOptions` so tests exercise the backoff and threshold-exit paths without real 65s waits.
+
+See [[sources/2026-07-14-bridge-self-monitoring]] for the full design and rationale.
+
 ## Constraints / gotchas
 
 - **One consumer only.** A second process polling `getUpdates` on the same bot token causes Telegram to reply `409 Conflict`. The bridge no longer exits on the first 409 — it enters the `conflict` health state, backs off 65s, and retries, exiting (to be restarted by launchd) only after 5 consecutive 409s (~5 min = a genuine second consumer, not a launchd restart race). See [[#Self-monitoring (PR #21 + #22)]]. Never run two bridge instances (or a bridge alongside an ad hoc polling script) against the same token.

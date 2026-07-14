@@ -37,6 +37,7 @@ Gmail has no send tool (only `create_draft` + read/label/search) — nothing to 
 ## Constraints / gotchas
 
 - **Accepted residual, not closed**: browser-automation sends (`mcp__claude-in-chrome__*` driving the Slack/Gmail web UI) aren't pattern-matchable and aren't gated. Detection is audit-log-only — a documented tradeoff, not an oversight.
+- **`bridge/notify.ts` is deliberately ungated, by design not oversight** (see [[capabilities/inbox-brief]]). It sends only to the operator's own configured Telegram chat — no destination argument exists — putting it in the same trust class as the bridge's own reply/alert messages and the approval surface's own sends, both already ungated; the gate's threat model is sends *to others* (Slack channels, Calendar invitees), not a notification to Gary himself. It also reads its message from a file rather than argv specifically so a swept email body containing a string like `api.telegram.org/.../sendMessage` can't land in the Bash `tool_use` command and trip the "Bash defense-in-depth" block below on Rachel's own legitimate call to the script.
 - **Slack tool-name confirmation is documentation-sourced, not live-introspected** for this gate's build — if Rachel's live Slack tool names ever drift from what's documented, `GATED_TOOL_NAMES` in `gate/sendGate.ts` silently stops matching. Closing this needs a startup-time live schema check or a future hook-probe run.
 - `permissionMode: "auto"` on Rachel's SDK session is a model-classifier mode, not a security boundary — the gate does not rely on it.
 

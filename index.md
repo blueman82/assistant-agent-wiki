@@ -35,3 +35,4 @@ Schema and workflows: see `AGENTS.md` in the project directory (`~/Github/assist
 - [[sources/2026-07-08-rachel-rebrand]] — secretary → Rachel rebrand (naming only, no behaviour change)
 - [[sources/2026-07-08-telegram-emit-channel]] — typed emit channel (text/tool/meta) keeps tool echoes and the done footer out of Telegram replies
 - [[sources/2026-07-08-telegram-image-reception]] — PR #17: Rachel can now receive photos and image documents via Telegram
+- [[sources/2026-07-14-terminal-tool-echo-truncation]] — removed the 100-char cap on terminal tool-use echoes in rachel.ts (terminal-only; Telegram unaffected)

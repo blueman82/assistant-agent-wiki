@@ -2,9 +2,9 @@
 title: "Telegram Front-End"
 type: capability
 created: 2026-07-07
-last_updated: 2026-07-08
+last_updated: 2026-07-14
 sources: ["bridge/telegram-bridge.ts", "bridge/api.ts", "bridge/launchd.plist", "rachel.ts", "gate/surfaces/telegram.ts", "prompts/system.md", "CLAUDE.md", "AGENTS.md"]
-tags: [capability, telegram, bridge, front-end, emit-channel, image-reception]
+tags: [capability, telegram, bridge, front-end, emit-channel, image-reception, self-monitoring]
 ---
 
 ## What it does

@@ -122,3 +122,4 @@ See [[sources/2026-07-14-bridge-self-monitoring]] for the full design and ration
 - [[architecture/overview]] — plumbing/brain split; the bridge is a second thin plumbing layer on top of the same `runTurn`
 - [[sources/2026-07-08-telegram-emit-channel]] — the PR that introduced the typed `TurnEmitKind` channel
 - [[sources/2026-07-08-telegram-image-reception]] — PR #17: image reception implementation, security decisions, known debt
+- [[sources/2026-07-14-bridge-self-monitoring]] — PRs #21 + #22: bridge health state machine, 409 backoff, fetch timeout, startup alert

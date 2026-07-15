@@ -11,6 +11,8 @@ tags: [gmail, telegram, notify, launchd, scheduled, recommend-only]
 
 Rachel gained a standing Gmail sweep capability: read `tasks/inbox-brief.md` and follow it to classify recent mail and push a concise brief to Gary's Telegram. Merged as PR #23 (`feature/inbox-brief` → `main`, merge commit `fb6f675`).
 
+> **Partially superseded by PR #28 (2026-07-15)** — see [[sources/2026-07-15-proactive-layer]] and [[capabilities/inbox-brief]]. PR #28 evolved the sweep into a producer for the proactive layer: the classification became a six-tier taxonomy with a severity mapping, the top two tiers (Urgent / Action required) now push **individually** through `proactive/push.ts` rather than riding the batch brief (with double-delivery exclusion), the schedule moved 08:00 → 08:05 (offset from the 08:00 calendar one-shot), and the launchd run is tool-narrowed via `RACHEL_ALLOWED_TOOLS=Read,Write,Bash,mcp__claude_ai_Gmail__*`. The "Accepted v1 limitation" below is narrowed but not closed: urgent/action-required mail now interrupts via the chokepoint, but there is still no producer-silence detection for the mail family — a run that silently fails to start still pages nobody. The `notify.ts` design and recommend-only analysis below remain accurate.
+
 New/changed files:
 - `tasks/inbox-brief.md` — the sweep prompt (recommend-only)
 - `bridge/notify.ts` (+ `bridge/notify.test.ts`) — new standalone proactive Telegram sender for headless one-shot runs

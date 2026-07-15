@@ -10,6 +10,8 @@ tags: [source, telegram, bridge, self-monitoring, health, resilience, pr-21, pr-
 
 Two related PRs, both merged to `main` on 2026-07-14, that close the Telegram bridge's self-monitoring gaps. Together they make a bridge failure surface on Telegram instead of only being noticed when Rachel goes quiet. See [[capabilities/telegram-frontend]] (the "Self-monitoring" section) for the reference write-up.
 
+> **Partially superseded by PR #26 (2026-07-15)** — see [[sources/2026-07-15-proactive-layer]]. This page's self-monitoring is the bridge watching *itself*; PR #26 added an external observer (the proactive sweep reading a per-poll heartbeat file), which closes the residuals this page leaves open: a wedged-alive bridge and a launchd-level death are now detected and alerted within one 30-min sweep tick. Gap 2's "the next boot announcing itself is the only signal a non-409 crash-restart loop leaves" is no longer true — it is now the *fastest* signal, not the only one. PR #26 also reroutes the startup and health-transition alerts through the `proactive/push.ts` chokepoint (with direct-send fallback); the FATAL 409 exit alert alone remains a direct awaited `sendChunked`. The PR #21/#22 mechanics documented below are otherwise still accurate.
+
 ## PR #21 — health state machine (merge 0598e4e)
 
 Replaced `bridge/telegram-bridge.ts`'s crash-loop-inducing `process.exit(1)`-on-first-409 with a three-state health machine.

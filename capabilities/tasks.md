@@ -2,7 +2,7 @@
 title: "Tasks Capability"
 type: capability
 created: 2026-06-07
-last_updated: 2026-07-14
+last_updated: 2026-07-15
 sources: ["prompts/system.md", "tasks/"]
 tags: [capability, tasks]
 ---

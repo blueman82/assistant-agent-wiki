@@ -38,7 +38,7 @@ Handled by the bridge before input ever reaches the agent:
 npm run bridge   # tsx bridge/telegram-bridge.ts
 ```
 
-For persistence (survives reboots/crashes): copy `bridge/launchd.plist` to `~/Library/LaunchAgents/com.rachel.telegram-bridge.plist`, replace `__REPO_PATH__` with the absolute path to the checkout, then `launchctl load ~/Library/LaunchAgents/com.rachel.telegram-bridge.plist`. `KeepAlive` restarts the process on any crash or exit; `ThrottleInterval: 60` caps launchd to at most one restart per 60s, so it can never restart faster than Telegram releases its single-consumer `getUpdates` lock (~30-60s). The bridge no longer exits on the first 409 — see [[#Self-monitoring (PR #21 + #22)]] for how a getUpdates conflict is now handled (65s backoff, threshold-5 exit).
+For persistence (survives reboots/crashes): run `./scripts/install.sh` from the repo root — it stamps, installs, and verifies this plist along with the other three Rachel services (see [[capabilities/installation]]; the old manual copy-and-`launchctl load` route is superseded). `KeepAlive` restarts the process on any crash or exit; `ThrottleInterval: 60` caps launchd to at most one restart per 60s, so it can never restart faster than Telegram releases its single-consumer `getUpdates` lock (~30-60s). The bridge no longer exits on the first 409 — see [[#Self-monitoring (PR #21 + #22)]] for how a getUpdates conflict is now handled (65s backoff, threshold-5 exit).
 
 ## Reply-content contract (typed emit channel)
 

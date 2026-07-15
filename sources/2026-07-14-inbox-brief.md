@@ -2,7 +2,7 @@
 title: "Inbox Brief (PR #23)"
 type: source
 created: 2026-07-14
-last_updated: 2026-07-14
+last_updated: 2026-07-15
 sources: ["tasks/inbox-brief.md", "bridge/notify.ts", "bridge/notify.test.ts", "tasks/inbox-brief-launchd.plist", "prompts/system.md", "CLAUDE.md"]
 tags: [gmail, telegram, notify, launchd, scheduled, recommend-only]
 ---

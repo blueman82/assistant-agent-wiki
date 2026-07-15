@@ -68,7 +68,8 @@ agent's `result` field — a separate LLM layer from Rachel, who runs inside it 
 the modal; the button's own `command` (in coderails' `examples/dashboard-config.json`) had to be
 rewritten too, so the outer agent reads the file named on this sentinel line and makes its
 **entire final message** exactly that file's verbatim contents. See coderails-wiki's
-[[pr_181_183_dashboard-run-output-wrap-and-inbox-brief-clean-modal]] for the full two-repo
+`sources/pr_181_183_dashboard-run-output-wrap-and-inbox-brief-clean-modal.md` (a separate
+vault at `~/Github/coderails-wiki/` — not wiki-linkable from here) for the full two-repo
 mechanism and live verification (run `5cfc5ee0d5a32a82`, modal output byte-matched the sent
 brief file, whitespace-normalised).
 

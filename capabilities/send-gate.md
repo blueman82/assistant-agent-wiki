@@ -2,8 +2,8 @@
 title: "Send Gate"
 type: capability
 created: 2026-07-07
-last_updated: 2026-07-14
-sources: ["rachel.ts", "gate/sendGate.ts", "gate/surfaces/telegram.ts", "gate/surfaces/queue.ts", "bridge/telegram-bridge.ts", "bridge/notify.ts", "prompts/system.md", "AGENTS.md"]
+last_updated: 2026-07-15
+sources: ["rachel.ts", "gate/sendGate.ts", "gate/surfaces/telegram.ts", "gate/surfaces/queue.ts", "bridge/telegram-bridge.ts", "bridge/notify.ts", "proactive/push.ts", "prompts/system.md", "AGENTS.md"]
 tags: [capability, gate, security, slack, calendar, telegram]
 ---
 

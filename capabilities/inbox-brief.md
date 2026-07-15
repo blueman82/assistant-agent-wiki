@@ -41,7 +41,7 @@ Individual pushes run the push CLI (family `mail`, event-id `mail:<threadId>` �
 ## How to invoke
 
 - Gary: "run the inbox brief" / "check my inbox" — Rachel reads `tasks/inbox-brief.md` and follows it immediately.
-- Scheduled: `tasks/inbox-brief-launchd.plist`, installed as `com.rachel.inbox-brief`, fires 08:00/11:00/14:00/17:00 Ireland time (local launchd job, not a cloud routine — a cloud runtime can't reach the local Gmail MCP connector or Telegram bridge).
+- Scheduled: `tasks/inbox-brief-launchd.plist`, installed as `com.rachel.inbox-brief`, fires 08:05/11:00/14:00/17:00 Ireland time (08:05, offset from the 08:00 calendar one-shot; local launchd job, not a cloud routine — a cloud runtime can't reach the local Gmail MCP connector or Telegram bridge).
 - The coderails dashboard's Inbox Brief button (per `prompts/system.md`; not independently verified live at ingest time).
 
 All three run the same headless one-shot: `bin/rachel "Read tasks/inbox-brief.md and follow it." < /dev/null`. Closed stdin means `rl.question` hits EOF and the process exits cleanly on its own once the turn completes — no `KeepAlive` needed.

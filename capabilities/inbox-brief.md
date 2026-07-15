@@ -78,7 +78,7 @@ The rule is an instruction constraint, reinforced but not made unbypassable by t
 
 ## Constraints / gotchas
 
-- Skip (no write, no send) only when there's nothing new since the last sweep at all. An all-noise sweep still sends a one-line brief — silence from Rachel should mean "hasn't run yet," never "ran and found nothing."
+- Skip (no write, no send) only when there's nothing new since the last sweep at all. An all-noise sweep still sends a one-line brief (first line tagged `[digest]`) — silence from Rachel should mean "hasn't run yet," never "ran and found nothing."
 - Keep well under Telegram's 4096-char single-message limit — trim detail rather than let a brief split across messages.
 - Known residual (stated in the task file itself): on a launchd run with no bridge in front of it, if both an individual push and the notify.ts brief delivery fail, the failure statement lands only in `.rachel/inbox-brief.log` — nothing reaches Gary's phone until he reads the log or the next healthy run. The button path is observable via the dashboard's run route. (Unlike the calendar family, there is no producer-silence detection for mail.)
 

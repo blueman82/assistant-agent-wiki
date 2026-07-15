@@ -3,8 +3,8 @@ title: "Inbox Brief"
 type: capability
 created: 2026-07-14
 last_updated: 2026-07-15
-sources: ["tasks/inbox-brief.md", "bridge/notify.ts", "tasks/inbox-brief-launchd.plist", "prompts/system.md", "CLAUDE.md"]
-tags: [capability, gmail, telegram, notify, launchd, recommend-only, dashboard-modal, brief-file-sentinel]
+sources: ["tasks/inbox-brief.md", "bridge/notify.ts", "tasks/inbox-brief-launchd.plist", "proactive/push.ts", "prompts/system.md", "CLAUDE.md"]
+tags: [capability, gmail, telegram, notify, launchd, recommend-only, dashboard-modal, brief-file-sentinel, proactive, six-tier]
 ---
 
 ## What it does

@@ -46,5 +46,6 @@ Gmail has no send tool (only `create_draft` + read/label/search) — nothing to 
 - [[capabilities/slack]] — Slack's `slack_send_message` is one of the gated tools
 - [[capabilities/telegram-frontend]] — owns the `getUpdates` loop this gate's Telegram surface depends on for callback delivery
 - [[capabilities/inbox-brief]] — consumer of the deliberately-ungated `notify.ts` path documented above
+- [[capabilities/proactive-layer]] — the `push.ts` chokepoint, the other deliberately-ungated own-chat sender
 - [[architecture/mcp-integrations]] — the tool surfaces the gate sits in front of
 - [[patterns/extending-system-md]] — the prompt-level draft-first contract this gate enforces mechanically

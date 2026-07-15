@@ -40,6 +40,7 @@ One long-lived process, one session. `sessionId` is set on the first turn's `ini
 |----------|---------|--------|
 | `RACHEL_MODEL` | `claude-sonnet-4-6` | Model |
 | `RACHEL_MAX_TURNS` | `200` | Max agent turns per request |
+| `RACHEL_ALLOWED_TOOLS` | unset (= full default list) | Comma-separated narrowing of the agent's allowedTools; remove-only, zero-tools throws (see [[capabilities/proactive-layer]]) |
 
 ## Relationships
 

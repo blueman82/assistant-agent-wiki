@@ -85,6 +85,7 @@ The rule is an instruction constraint, reinforced but not made unbypassable by t
 ## Relationships
 
 - [[sources/2026-07-14-inbox-brief]] — PR #23 source page, full design rationale
+- [[capabilities/proactive-layer]] — the chokepoint the Urgent/Action-required tiers push through; [[sources/2026-07-15-proactive-layer]] for the PR #28 evolution
 - [[capabilities/telegram-frontend]] — the bridge's own reply path; `notify.ts` is a separate, standalone outbound path for headless runs
 - [[capabilities/send-gate]] — why `notify.ts` and its Bash invocation are deliberately ungated
 - [[architecture/overview]] — headless one-shot execution mode

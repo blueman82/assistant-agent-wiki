@@ -29,6 +29,26 @@ A headless one-shot run has no bridge in front of it (`bridge/telegram-bridge.ts
 
 Success must be confirmed, not assumed: exit code 0 **and** a printed `[notify] sent.` line. Either missing means the brief did not reach Gary, and the sweep must report failure in its own turn output rather than claim success.
 
+## `BRIEF FILE:` sentinel — makes the dashboard modal show the clean brief (PR #27, 2026-07-15)
+
+Once delivery is confirmed (exit 0 + `[notify] sent.`), Rachel's turn must end with a single
+final line, exactly: `BRIEF FILE: <absolute path to the scratch file she wrote and sent>` — no
+code fence, no bullet, no leading whitespace, so the line is machine-findable by its literal `B`
+prefix. On a delivery failure, or the skipped-sweep case above, she must NOT print this line —
+state the failure/skip plainly instead, so a stale file is never advertised as current.
+
+This exists for the coderails dashboard's INBOX BRIEF button, not for Gary directly: pressing
+that button previously showed the run-output modal Rachel's raw execution trace (tool calls,
+reasoning), not the brief itself, because the modal renders the **outer** spawned `claude -p`
+agent's `result` field — a separate LLM layer from Rachel, who runs inside it via
+`bin/rachel "Read tasks/inbox-brief.md and follow it."`. Editing this file alone could not reach
+the modal; the button's own `command` (in coderails' `examples/dashboard-config.json`) had to be
+rewritten too, so the outer agent reads the file named on this sentinel line and makes its
+**entire final message** exactly that file's verbatim contents. See coderails-wiki's
+[[pr_181_183_dashboard-run-output-wrap-and-inbox-brief-clean-modal]] for the full two-repo
+mechanism and live verification (run `5cfc5ee0d5a32a82`, modal output byte-matched the sent
+brief file, whitespace-normalised).
+
 ## Recommend-only — scope of the guarantee
 
 The rule is an instruction constraint, reinforced but not made unbypassable by tool shape. Gary's Gmail MCP connector has no send or hard-delete tool — but it does expose `unlabel_thread`/`unlabel_message`, and removing the `INBOX` label is functionally archiving. So "no send/delete tool" is a partial backstop, not a guarantee; the recommend-only behaviour depends on `tasks/inbox-brief.md`'s instruction being followed.

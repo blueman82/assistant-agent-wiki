@@ -103,11 +103,27 @@ The bridge watches its own health so a failure surfaces on Telegram, instead of 
 
 **Fetch timeout (PR #22, gap 1).** `bridge/api.ts`'s `tg()` passes `signal: AbortSignal.timeout(config.requestTimeoutMs ?? 45_000)` to the transport. **Why:** a wedged getUpdates long-poll (network drop without RST, sleep/wake) previously never returned and never threw — so the health machine, which assumes failures throw, never fired and the bridge looked `healthy` while dead. 45s is deliberately longer than the 30s server-side long-poll (`timeout=30`) so a valid slow poll is never aborted, but short enough to catch a genuine hang. The abort surfaces as a thrown error the `failed`-state path handles, turning an invisible hang into an observable alert.
 
-**Startup alert (PR #22, gap 2).** `run()` fires a one-time best-effort `sendChunked(config, "Rachel bridge started.").catch(() => {})` after `setMyCommands`, before the poll loop. **Why:** the FATAL 409 exit was the *only* exit that alerted. Any other death (OOM, reboot, uncaught exception, `launchctl bootout`, the gap-1 timeout crash) sends nothing, because dead processes can't — and the restarted process boots silently `healthy` with `lastError = null`. The next boot announcing itself is the only signal a non-409 crash-restart loop leaves. It does **not** `await` (unlike the FATAL-exit alert) — the process is continuing into the poll loop, not exiting — and its `.catch(() => {})` means a failed startup alert never blocks or crashes boot.
+**Startup alert (PR #22, gap 2; delivery reworked by PR #26).** `run()` fires a one-time best-effort startup alert ("Rachel bridge started.") after `setMyCommands`, before the poll loop. **Why:** the FATAL 409 exit was the *only* exit that alerted. Any other death (OOM, reboot, uncaught exception, `launchctl bootout`, the gap-1 timeout crash) sends nothing, because dead processes can't — and the restarted process boots silently `healthy` with `lastError = null`. Since PR #26 this is no longer the only signal a non-409 death leaves — the proactive sweep detects launchd-level death and a wedged poll loop externally within one 30-min tick (see [[capabilities/proactive-layer]]) — but the boot announcement remains the fastest and cheapest one. It is fire-and-forget (`void`, unlike the FATAL-exit alert's `await`) — the process is continuing into the poll loop, not exiting — so a failed startup alert never blocks or crashes boot.
+
+**Chokepoint-routed alerts (PR #26).** The startup alert, the health-transition alerts (entering `conflict`/`failed`, recovery to `healthy`), and the loop-watchdog pings no longer call `sendChunked` directly. They route through `proactive/push.ts`'s `push()` via a `pushAlert` wrapper, under families `bridge-startup` (event `bridge:startup`, state `boot:<ISO boot time>` — per-process, so in-process re-entry dedups while a crash-restart re-arms and announces itself), `bridge-health` (event `bridge:health`, state = the health state entered), and `loop-watchdog`, all severity `normal`. If `push()` itself throws, `pushAlert` falls back to a direct `sendChunked` — and because `push()` treats post-send bookkeeping failures as sent (never rethrows), the fallback only ever fires for **pre-send** failures and can never double-deliver. **The FATAL 409 exit alert is unchanged**: still a direct, `await`ed `sendChunked` — the process is about to exit and must not depend on the chokepoint.
+
+**Heartbeat (PR #26).** The bridge writes `~/.rachel/bridge-heartbeat.json` on every poll iteration: `{schema_version: 1, last_poll_at, queue_depth, turn_in_flight_since}`. Timestamps are strictly monotonic per iteration (distinguishable even under a coarse/frozen clock); the write is temp-file + rename (atomic, same recipe as push.ts's store writes); a write failure must never break polling — it logs once on entering the failing state and re-arms on recovery. This file is what lets the proactive sweep detect a **wedged-alive** bridge (launchctl says running, but `last_poll_at` stale >10 min → urgent alert) and a **drain-stall** (one turn in flight >30 min while the queue starves behind it → normal alert). Path injectable via `CreateBridgeOptions.heartbeatPath`.
 
 **Testability.** `conflictBackoffMs` is injectable via `CreateBridgeOptions` so tests exercise the backoff and threshold-exit paths without real 65s waits.
 
-See [[sources/2026-07-14-bridge-self-monitoring]] for the full design and rationale.
+See [[sources/2026-07-14-bridge-self-monitoring]] for the PR #21/#22 design and rationale, and [[sources/2026-07-15-proactive-layer]] for the PR #26 layer on top.
+
+## External liveness watch (PR #26) — the boundary is closed
+
+Self-monitoring above is the bridge watching itself — it cannot cover its own death. Since PR #26 the proactive sweep ([[capabilities/proactive-layer]], `com.rachel.proactive-sweep`, every 30 min) watches the bridge from outside and alerts through the same chokepoint:
+
+| Failure | Detection | Alert |
+|---|---|---|
+| launchd-level death | `launchctl print` not running | urgent, within one tick |
+| Wedged-alive (process up, poll loop silent) | heartbeat `last_poll_at` stale >10 min | urgent, within one tick |
+| Drain-stall (poll fine, one turn >30 min) | heartbeat `turn_in_flight_since` | normal, within one tick |
+
+Recovery is announced only after a recorded down. Honest residuals: drain stalls under 30 min; Telegram itself being down (no alert path can use Telegram then); anything the heartbeat can't express.
 
 ## Standalone outbound path for headless runs (`bridge/notify.ts`)
 

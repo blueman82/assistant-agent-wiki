@@ -3,7 +3,7 @@ title: "Bridge self-monitoring (PRs #21 + #22)"
 type: source
 origin: "assistant-agent PR #21 (merge 0598e4e) + PR #22 (merge 097d6c3)"
 created: 2026-07-14
-last_updated: 2026-07-14
+last_updated: 2026-07-15
 sources: ["bridge/telegram-bridge.ts", "bridge/api.ts", "bridge/launchd.plist"]
 tags: [source, telegram, bridge, self-monitoring, health, resilience, pr-21, pr-22]
 ---

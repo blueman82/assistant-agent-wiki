@@ -20,6 +20,7 @@ Schema and workflows: see `AGENTS.md` in the project directory (`~/Github/assist
 - [[capabilities/telegram-frontend]] — Telegram chat front-end onto Rachel; owns the getUpdates loop, single-user only, strips markdown from replies (no parse_mode); receives photos and image documents (PR #17); self-monitors via a health state machine with 409 backoff, fetch timeout, and startup alert (PRs #21 + #22); writes a per-poll heartbeat and routes its own alerts through the proactive chokepoint, with the sweep watching it from outside — liveness boundary closed (PR #26)
 - [[capabilities/inbox-brief]] — recommend-only Gmail sweep, six-tier taxonomy; Urgent/Action-required threads pushed individually through the proactive chokepoint, the rest as a batch brief via `notify.ts`; scheduled 4x/day + dashboard button + on-request (PRs #23, #27, #28)
 - [[capabilities/proactive-layer]] — Rachel's proactive layer: the `push.ts` chokepoint (dedup, quiet hours 22:30–08:00, 10/day budget), the 30-min deterministic sweep (PR-red, bridge liveness, calendar <2h escalation), headless one-shots with `RACHEL_ALLOWED_TOOLS` narrowing, and the security invariants (PRs #24–#26, #28)
+- [[capabilities/installation]] — one-command installer: stamps + installs + verifies all four Rachel launchd services, config bootstrap-if-absent, truthful PASS/FAIL contract, launchd teardown-race handling (PRs #30-#32)
 
 ## Patterns
 
@@ -41,3 +42,4 @@ Schema and workflows: see `AGENTS.md` in the project directory (`~/Github/assist
 - [[sources/2026-07-14-bridge-self-monitoring]] — PRs #21 + #22: bridge health state machine (409 backoff, threshold-5 exit), fetch timeout, and startup alert
 - [[sources/2026-07-14-inbox-brief]] — PR #23: recommend-only Gmail sweep + `bridge/notify.ts` standalone Telegram sender for headless one-shot runs
 - [[sources/2026-07-15-proactive-layer]] — PRs #24–#26 + #28: push chokepoint, deterministic sweep, bridge heartbeat + closed liveness boundary, one-shot wiring with tool narrowing; deployed live 2026-07-15
+- [[sources/2026-07-15-installer]] — PRs #30-#32: one-package installer, push.ts TDZ hotfix, live-found launchd teardown race; clean-slate cycle verified live

@@ -28,7 +28,7 @@ Schema and workflows: see `AGENTS.md` in the project directory (`~/Github/assist
 
 ## Investigations
 
-*(empty — file answers back here as they compound)*
+- [[investigations/2026-07-16-model-effort-switching-assumptions]] — plan for runtime `/model`/`/effort` switching: the model-constant-vs-per-turn asymmetry, why "shared in-memory state" is per-process not global, and the `/status` staleness bug it would introduce
 
 ## Sources
 

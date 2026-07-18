@@ -2,9 +2,9 @@
 title: "Telegram Front-End"
 type: capability
 created: 2026-07-07
-last_updated: 2026-07-15
-sources: ["bridge/telegram-bridge.ts", "bridge/api.ts", "bridge/launchd.plist", "bridge/notify.ts", "rachel.ts", "gate/surfaces/telegram.ts", "proactive/push.ts", "proactive/sweep.ts", "prompts/system.md", "CLAUDE.md", "AGENTS.md"]
-tags: [capability, telegram, bridge, front-end, emit-channel, image-reception, self-monitoring, heartbeat, proactive]
+last_updated: 2026-07-18
+sources: ["bridge/telegram-bridge.ts", "bridge/api.ts", "bridge/speech.ts", "bridge/launchd.plist", "bridge/notify.ts", "rachel.ts", "gate/surfaces/telegram.ts", "proactive/push.ts", "proactive/sweep.ts", "prompts/system.md", "CLAUDE.md", "AGENTS.md"]
+tags: [capability, telegram, bridge, front-end, emit-channel, image-reception, voice, stt, tts, self-monitoring, heartbeat, proactive]
 ---
 
 ## What it does
@@ -87,6 +87,26 @@ Gary can send photos or image documents to Rachel via Telegram. The bridge detec
 - Temp files in `~/.rachel/tmp/` are never cleaned up — the directory grows over time. No cleanup is scheduled.
 - No abort signal is threaded into `downloadFile` — a hung Telegram CDN will stall the entire poll loop until Node's default fetch times out.
 
+## Voice in/out — STT+TTS (Tasks 4, 6-9, PR #42)
+
+Gary can send Telegram voice notes to Rachel and get spoken replies back, using local STT/TTS — no cloud speech API. `bridge/speech.ts` shells out to a dedicated Python 3.12 venv (`~/.rachel/venvs/speech`, `scripts/speech/setup.sh`) via `execFile` with a timeout, mirroring `proactive/sweep.ts`'s injectable exec-function pattern: `transcribe()` (mlx-whisper, 30s timeout), `synthesize()` (mlx-audio/Kokoro, 20s timeout), `convertToOgg()` (ffmpeg → Opus/OGG for Telegram, 15s timeout). All three throw on nonzero exit/timeout rather than returning a sentinel; callers decide the fallback.
+
+**Inbound.** `handleMessage`'s `msg.voice` branch (`bridge/telegram-bridge.ts`) downloads the `.ogg` via the existing `downloadFileFn` seam, transcribes it locally, and pushes the transcript onto the FIFO. Download or transcription failure never silently drops the message — each gets its own user-facing text reply ("Failed to download...", "I couldn't transcribe that..."). The downloaded `.ogg` is best-effort unlinked after transcription (success or failure).
+
+**FIFO shape.** PR (Task 6) migrated the FIFO from `string[]` to `{ text: string; voice: boolean }[]` — a voice-origin turn is tagged `voice: true` at push time so `drainFifo` knows to speak the reply back. Text-origin and image-origin pushes are tagged `voice: false`.
+
+**Outbound — voice-origin turns always answer in voice, whatever the length.** `drainFifo` (`bridge/telegram-bridge.ts:715-734`) branches on the FIFO entry's `voice` flag: for `voice: true`, it runs the joined reply text through the existing `stripMarkdown` sanitiser (the same one `sendChunked` uses for text replies — reused here so a stray `**bold**`/backtick isn't read aloud literally), then `synthesizeFn` → `convertToOggFn` → `sendVoiceFn` in sequence, writing temp files to `~/.rachel/tmp/reply-<timestamp>.{wav,ogg}` (best-effort unlinked in a `finally`, whichever step failed or succeeded). **Text is the fallback only if that pipeline throws** — a `synthesize`, `convertToOgg`, or `sendVoice` failure alike is caught and logged, and the plain reply text is sent via the ordinary `reply()`/`sendChunked` path instead. It is never a silent, size-based downgrade.
+
+**The 1000-character cap (Task 8) and its removal (PR #42).** Task 8's first implementation of the outbound branch added `VOICE_REPLY_CHAR_LIMIT = 1000`: a voice-origin turn whose stripped reply exceeded 1000 chars silently sent text instead of synthesizing speech, and a test pinned 1000 as if it were a requirement. **The number was never a design decision or a measured constraint — it was invented during implementation, sourced from nothing in the spec or the wiki.** It surfaced as a user-visible bug: voice appeared to "work once, then stop", because a short first reply spoke normally and a longer second reply (e.g. a status report) silently became text with no indication why. Gary's call (PR #42, `d476555`): drop the cap outright. There is now no length branch at all — every voice-origin turn attempts synthesis regardless of reply length; only a thrown error falls back to text.
+
+**Two risks are now live, not theoretical, because of this removal:**
+- **No split-into-multiple-voice-messages story.** Text replies have `chunkText`'s 4096-char Telegram boundary (see Chunking boundary below) — voice has no equivalent. A very long reply (e.g. a full inbox brief spoken back) is handed to `synthesizeFn` as one uninterrupted string with no multi-message fallback.
+- **`sendVoiceFn` is unchecked against Telegram's own voice-message size ceiling.** If a long synthesized `.ogg` exceeds it, Telegram would presumably reject the `sendVoice` call, which would throw and fall back to text — but this path has never executed. It's an inferred failure mode from the fallback design, not an observed one.
+
+**Real long-reply synthesis is unverified.** The cap made synthesis above 1000 characters unreachable in the running system until PR #42, and the test suite stubs `synthesizeFn`/`convertToOggFn`/`sendVoiceFn` throughout — so no real Kokoro synthesis of a long reply, and no real oversized-`.ogg` `sendVoice` call, has ever actually round-tripped end to end. `npm run typecheck` and `npm test` (391/391) are clean as of PR #42, but that only confirms the stubbed logic paths, not real synthesis behaviour at length. See [[investigations/2026-07-18-telegram-voice-stt-tts-spec-gaps]] (gap 3) for the fuller spec-vs-code review this was resolved against.
+
+**Known debt (compounds the PR #17 temp-file gap above):** each voice turn now adds an inbound `.ogg` plus outbound `.wav`+`.ogg` intermediates to `~/.rachel/tmp/` — all three are best-effort unlinked in their respective `finally` blocks, but an unlink failure is swallowed silently (no retry, no alert), same as the pre-existing image-reception leak.
+
 ## Self-monitoring (PR #21 + #22)
 
 The bridge watches its own health so a failure surfaces on Telegram, instead of only being noticed when Rachel goes quiet. `run()` in `bridge/telegram-bridge.ts` tracks a three-state health machine and alerts Gary on state **transitions only** — never per-error, so an outage can't spam his phone.
@@ -147,3 +167,4 @@ Not part of this bridge — a separate, standalone sender for a different execut
 - [[sources/2026-07-14-inbox-brief]] — PR #23: `notify.ts` design and rationale
 - [[capabilities/proactive-layer]] — the chokepoint the bridge's own alerts now route through, and the sweep that watches the bridge from outside
 - [[sources/2026-07-15-proactive-layer]] — PR #26: heartbeat, chokepoint-routed alerts, closed liveness boundary
+- [[investigations/2026-07-18-telegram-voice-stt-tts-spec-gaps]] — spec-vs-code review the voice feature (Tasks 4, 6-9) was built against, and PR #42's resolution of gap 3 (the unsourced 1000-char cap and its removal)

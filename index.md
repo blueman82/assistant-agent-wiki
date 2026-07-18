@@ -29,6 +29,7 @@ Schema and workflows: see `AGENTS.md` in the project directory (`~/Github/assist
 ## Investigations
 
 - [[investigations/2026-07-16-model-effort-switching-assumptions]] — plan for runtime `/model`/`/effort` switching: the model-constant-vs-per-turn asymmetry, why "shared in-memory state" is per-process not global, and the `/status` staleness bug it would introduce
+- [[investigations/2026-07-18-telegram-voice-stt-tts-spec-gaps]] — cross-check of the Telegram voice STT+TTS spec against bridge architecture: FIFO shape change confirmed, and 7 assumed-but-unenforced gaps (drainFifo reply branch, no markdown-stripping before TTS, no length cap on synthesized output, no spoken-register signal to the model, no install.sh preflight for the new Python/ffmpeg deps, a half-accurate execFile-timeout precedent, and compounding the already-filed temp-file cleanup debt)
 
 ## Sources
 

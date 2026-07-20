@@ -46,3 +46,4 @@ Schema and workflows: see `AGENTS.md` in the project directory (`~/Github/assist
 - [[sources/2026-07-14-inbox-brief]] — PR #23: recommend-only Gmail sweep + `bridge/notify.ts` standalone Telegram sender for headless one-shot runs
 - [[sources/2026-07-15-proactive-layer]] — PRs #24–#26 + #28: push chokepoint, deterministic sweep, bridge heartbeat + closed liveness boundary, one-shot wiring with tool narrowing; deployed live 2026-07-15
 - [[sources/2026-07-15-installer]] — PRs #30-#32: one-package installer, push.ts TDZ hotfix, live-found launchd teardown race; clean-slate cycle verified live
+- [[sources/2026-07-20-persistent-calendar-index]] — PR #48: persistent calendar index (upcoming 7-14d + recent 30d) auto-refreshed 4x/day; solves cross-session calendar awareness

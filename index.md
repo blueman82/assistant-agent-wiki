@@ -16,6 +16,7 @@ Schema and workflows: see `AGENTS.md` in the project directory (`~/Github/assist
 - [[capabilities/slack]] — personal Slack read + send, confirm-before-send, search consent rules
 - [[capabilities/email]] — Not yet documented.
 - [[capabilities/calendar]] — Not yet documented.
+- [[calendar-log]] — Persistent index of upcoming events (7-14 days) and recent completions (30 days), auto-refreshed by the proactive-calendar task 4x/day.
 - [[capabilities/send-gate]] — deterministic PreToolUse hook enforcing confirm-before-send on Slack/Calendar
 - [[capabilities/ask-user-question-hook]] — PreToolUse hook denying AskUserQuestion tool, forcing conversational asking; E3 eval 4/4 pass (2026-07-19)
 - [[capabilities/telegram-frontend]] — Telegram chat front-end onto Rachel; owns the getUpdates loop, single-user only, strips markdown from replies (no parse_mode); receives photos and image documents (PR #17); local voice in/out via mlx-whisper/Kokoro — voice-origin turns always answer in voice regardless of length, text only on synthesis failure (Tasks 4, 6-9, PR #42 dropped an unsourced 1000-char cap; commit 6f409be added a character-count log line + Telegram voice-note caption; PR #44 added a mirrored inbound-success log line); self-monitors via a health state machine with 409 backoff, fetch timeout, and startup alert (PRs #21 + #22); writes a per-poll heartbeat and routes its own alerts through the proactive chokepoint, with the sweep watching it from outside — liveness boundary closed (PR #26)

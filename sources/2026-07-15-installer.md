@@ -1,4 +1,9 @@
 ---
+title: "2026-07-15 — One-package installer + TDZ hotfix (PRs #30–#32)"
+type: source
+created: 2026-07-15
+last_updated: 2026-07-15
+sources: [scripts/install.sh, proactive/push.ts, gate/sendGate.ts]
 tags: [source, installer, deployment, hotfix, launchd]
 ---
 

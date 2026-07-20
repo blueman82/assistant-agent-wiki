@@ -57,4 +57,3 @@ Case 4 specifically tests the hook's visible effect: given a prompt that would n
 - [[capabilities/send-gate]] — sibling PreToolUse hook, gating send-class tools
 - [[architecture/mcp-integrations]] — MCP tools Rachel reaches
 - [[patterns/extending-system-md]] — the prompt-level clarification contract this hook reinforces
-- [[patterns/ask-before-proceeding]] — the broader "ask for clarification" pattern (if it exists)

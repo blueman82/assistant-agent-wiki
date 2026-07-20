@@ -1,4 +1,9 @@
 ---
+title: Installation — the one-package installer
+type: capability
+created: 2026-07-15
+last_updated: 2026-07-15
+sources: [scripts/install.sh]
 tags: [capability, installation, deployment, launchd, installer]
 ---
 

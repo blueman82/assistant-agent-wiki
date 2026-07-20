@@ -1,8 +1,9 @@
 ---
 title: Persistent Calendar Index
 type: source
-origin: PR #48 (blueman82/assistant-agent)
-date: 2026-07-20
+created: 2026-07-20
+last_updated: 2026-07-20
+sources: [tasks/proactive-calendar.md]
 tags: [calendar, persistence, cross-session-memory, proactive-layer]
 ---
 

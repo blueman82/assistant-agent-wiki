@@ -33,6 +33,10 @@ Schema and workflows: see `AGENTS.md` in the project directory (`~/Github/assist
 - [[investigations/2026-07-16-model-effort-switching-assumptions]] — plan for runtime `/model`/`/effort` switching: the model-constant-vs-per-turn asymmetry, why "shared in-memory state" is per-process not global, and the `/status` staleness bug it would introduce
 - [[investigations/2026-07-18-telegram-voice-stt-tts-spec-gaps]] — cross-check of the Telegram voice STT+TTS spec against bridge architecture: FIFO shape change confirmed, and 7 assumed-but-unenforced gaps (drainFifo reply branch, no markdown-stripping before TTS, no length cap on synthesized output, no spoken-register signal to the model, no install.sh preflight for the new Python/ffmpeg deps, a half-accurate execFile-timeout precedent, and compounding the already-filed temp-file cleanup debt)
 
+## Decisions
+
+- [[decisions/repo-depersonalisation_2026-07-21]] — what was untracked from the public repo and why: personal task files, `.claude/`, `evals/`, `workflow.config.yaml`; the system prompt split into a generic tracked `system.md` plus a gitignored `system.local.md` resolved by `proactive/systemPrompt.ts`; and the one removal that had to be **reverted** — the launchd plists are install machinery, not personal content, and untracking them failed 26 tests on a clean checkout. Carries the general lesson: "is this file personal?" and "does the repo need this file?" are different questions, and only a clean-checkout run settles the second.
+
 ## Sources
 
 - [[sources/karpathy-llm-wiki]] — the LLM wiki pattern this knowledge base is based on

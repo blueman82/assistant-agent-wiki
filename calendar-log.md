@@ -6,7 +6,6 @@ Persistent index of Gary's calendar events. Updated automatically by the proacti
 
 | Date | Event | Time |
 |------|-------|------|
-| 2026-07-27 | 🌛 Evening Supplements (30-60 min before bed) | 22:15-22:30 |
 | 2026-07-28 | ☀️ Morning Supplements + Breakfast | 10:00-10:15 |
 | 2026-07-28 | 🌛 Evening Supplements (30-60 min before bed) | 22:15-22:30 |
 | 2026-07-29 | ☀️ Morning Supplements + Breakfast | 10:00-10:15 |
@@ -20,12 +19,12 @@ Persistent index of Gary's calendar events. Updated automatically by the proacti
 | 2026-08-02 | ☀️ Morning Supplements + Breakfast | 10:00-10:15 |
 | 2026-08-02 | 🌛 Evening Supplements (30-60 min before bed) | 22:15-22:30 |
 | 2026-08-03 | ☀️ Morning Supplements + Breakfast | 10:00-10:15 |
+| 2026-08-03 | 🌛 Evening Supplements (30-60 min before bed) | 22:15-22:30 |
 
 ## Recent (past 30 days)
 
 | Date | Event | Time |
 |------|-------|------|
-| 2026-06-20 | 🌛 Evening Supplements (30-60 min before bed) | 22:15-22:30 |
 | 2026-06-21 | ☀️ Morning Supplements + Breakfast | 10:00-10:15 |
 | 2026-06-21 | 🌛 Evening Supplements (30-60 min before bed) | 22:15-22:30 |
 | 2026-06-22 | ☀️ Morning Supplements + Breakfast | 10:00-10:15 |
@@ -90,3 +89,5 @@ Persistent index of Gary's calendar events. Updated automatically by the proacti
 | 2026-07-20 | ☀️ Morning Supplements + Breakfast | 10:00-10:15 |
 | 2026-07-20 | Finish National Child Scheme application | 10:15-11:15 |
 | 2026-07-20 | Check holiday balance in Workday (Cisco) | 11:00-11:10 |
+| 2026-07-20 | Unblocker – en-suite shower drain | 22:00-22:15 |
+| 2026-07-20 | 🌛 Evening Supplements (30-60 min before bed) | 22:15-22:30 |

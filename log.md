@@ -138,3 +138,34 @@ pollutes the tracked vault — left alone, not this fix's concern.
 
 Verified zero remaining `decisions/` references vault-wide via
 `grep -rn "decisions/" --include="*.md" .` returning nothing.
+
+## [2026-07-21] lint | Re-lint after decisions/ taxonomy fix, 27 non-template pages
+
+Re-verified the taxonomy correction landed clean. Both moved pages —
+[[investigations/2026-07-21-rejected-shared-session-thread]] and
+[[investigations/2026-07-21-repo-depersonalisation]] — carry `type: investigation`
+in frontmatter and are reachable from index.md's `## Investigations` section
+(no separate `## Decisions` section remains). `decisions/` directory does not
+exist. Zero remaining `[[decisions/...]]` wikilinks or `type: decision`
+frontmatter anywhere; the only surviving text mentioning "decisions/" is this
+log's own prior entry describing the fix (historical record, not a live
+reference), plus two unrelated plain-English uses ("Key Decisions" heading in
+sources/2026-07-20-persistent-calendar-index.md, "replace-not-add decision" in
+index.md's slack line) — neither is a taxonomy reference.
+
+**Fixed 1**: capabilities/tasks.md's `[[repo-depersonalisation_2026-07-21]]`
+link never resolved — the taxonomy fix's `git mv` renamed that file from
+`repo-depersonalisation_2026-07-21.md` to `2026-07-21-repo-depersonalisation.md`
+(documented in the fix's own log entry above) but this one inbound link outside
+investigations/ wasn't updated to match. Corrected to
+`[[investigations/2026-07-21-repo-depersonalisation]]`.
+
+**0 contradictions** — no ⚠️ CONTRADICTION flags anywhere; no stale `type:
+decision` frontmatter; no page presents the old decisions/ taxonomy as current.
+**0 orphans** — every non-template, non-index/log page is linked from
+index.md; the only orphan in the vault, raw/task_to_do.md, is pre-existing,
+already triaged to assistant-agent/tasks/, and outside a wiki page (not subject
+to the index-linkage check). **0 stale pages** at the 90-day threshold —
+oldest is sources/karpathy-llm-wiki.md at 44 days (exempt external reference);
+both moved pages carry last_updated: 2026-07-21. raw/ has no untriaged
+backlog beyond the already-known task_to_do.md.

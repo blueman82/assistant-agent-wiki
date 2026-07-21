@@ -4,3 +4,4 @@
 
 # Hook output logs
 logs/
+.DS_Store

@@ -46,12 +46,12 @@ Recall is not left to the model noticing the file exists — `composeSystemPromp
 
 ## Design note — why this is not session persistence
 
-Memory and Telegram session continuity ([[capabilities/telegram-frontend]]'s bridge-restart note) are deliberately two separate mechanisms, not one. A single shared-conversation-thread design was considered and rejected — see [[decisions/2026-07-21-rejected-shared-session-thread]] for the three reasons, the decisive one being that SDK context compaction discards old transcript content, so a persisted session thread is not actually durable across time. The memory store lives outside the transcript entirely, which is what makes it survive compaction.
+Memory and Telegram session continuity ([[capabilities/telegram-frontend]]'s bridge-restart note) are deliberately two separate mechanisms, not one. A single shared-conversation-thread design was considered and rejected — see [[investigations/2026-07-21-rejected-shared-session-thread]] for the three reasons, the decisive one being that SDK context compaction discards old transcript content, so a persisted session thread is not actually durable across time. The memory store lives outside the transcript entirely, which is what makes it survive compaction.
 
 ## Relationships
 
 - [[sources/2026-07-21-cross-platform-persistent-memory]] — the PR cluster (#49, #50) that built this
-- [[decisions/2026-07-21-rejected-shared-session-thread]] — why this is separate from session persistence
+- [[investigations/2026-07-21-rejected-shared-session-thread]] — why this is separate from session persistence
 - [[architecture/overview]] — where `composeSystemPrompt` sits in the turn-construction pipeline
 - [[capabilities/tasks]] — the other store; time-bound action items go there, not here
 - [[capabilities/proactive-layer]] — `proactive/push.ts`'s `readJson` contract this module's error handling mirrors

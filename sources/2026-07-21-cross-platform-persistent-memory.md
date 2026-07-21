@@ -14,7 +14,7 @@ Four merged PRs, one cluster, two independent mechanisms:
 1. **A fact-based memory store** (PRs #49, #50) — works on every surface (terminal, Telegram, headless one-shots).
 2. **Bridge-only session persistence** (PRs #51, #52) — Telegram conversation continuity across a bridge process restart only.
 
-These are deliberately separate systems, not one unified mechanism — see [[decisions/2026-07-21-rejected-shared-session-thread]] for why a single shared-thread design was considered and rejected.
+These are deliberately separate systems, not one unified mechanism — see [[investigations/2026-07-21-rejected-shared-session-thread]] for why a single shared-thread design was considered and rejected.
 
 ## 1. Memory store (PR #49 — `a002085`, PR #50 — `7be07d2`)
 
@@ -39,7 +39,7 @@ Session file location: `<repo>/.rachel/bridge-session.json` (repo-local, gitigno
 
 ### The one-writer invariant hole (PR #52's real content)
 
-PR #51 documented `RACHEL_SESSION_FILE` as "exactly one writer" (the bridge) to keep the SDK's parentUuid transcript chain from forking under concurrent resume (see [[decisions/2026-07-21-rejected-shared-session-thread]]). Post-merge review found this was true as a *static* claim but false at *runtime*: `rachel.ts` gated the session write purely on the env var being **set**. The bridge's plist sets no `RACHEL_ALLOWED_TOOLS`, so bridge turns run with unrestricted Bash — and a Bash-spawned child (a nested `bin/rachel "..."` one-shot, an established pattern per `prompts/system.md`) inherits `RACHEL_SESSION_FILE` via ordinary process env inheritance. That child would capture its own session id under the same path and silently clobber the bridge's live session pointer — the next bridge restart would resume the wrong session.
+PR #51 documented `RACHEL_SESSION_FILE` as "exactly one writer" (the bridge) to keep the SDK's parentUuid transcript chain from forking under concurrent resume (see [[investigations/2026-07-21-rejected-shared-session-thread]]). Post-merge review found this was true as a *static* claim but false at *runtime*: `rachel.ts` gated the session write purely on the env var being **set**. The bridge's plist sets no `RACHEL_ALLOWED_TOOLS`, so bridge turns run with unrestricted Bash — and a Bash-spawned child (a nested `bin/rachel "..."` one-shot, an established pattern per `prompts/system.md`) inherits `RACHEL_SESSION_FILE` via ordinary process env inheritance. That child would capture its own session id under the same path and silently clobber the bridge's live session pointer — the next bridge restart would resume the wrong session.
 
 Fix (`rachel.ts` ~line 263): when the seam is active, `options.env` is set to a spread of `process.env` with `RACHEL_SESSION_FILE` deleted, so the SDK subprocess (and anything *it* spawns via Bash) never sees the variable. Critical implementation detail, load-bearing: the SDK's `sdk.d.ts` documents `Options.env` as **replacing** the subprocess env entirely, not merging with it — spreading `process.env` first is mandatory, or the subprocess loses `PATH`/`HOME`/everything else and Bash breaks. When the seam is unset (CLI, all headless one-shots), `options.env` is left untouched entirely, so the SDK keeps managing subprocess env exactly as before — pinned by a dedicated test asserting `options.env` stays `undefined` in that case.
 
@@ -49,7 +49,7 @@ Fix (`rachel.ts` ~line 263): when the seam is active, `options.env` is set to a 
 
 ## Relationships
 
-- [[decisions/2026-07-21-rejected-shared-session-thread]] — why one unified shared-thread design was rejected in favour of these two separate mechanisms
+- [[investigations/2026-07-21-rejected-shared-session-thread]] — why one unified shared-thread design was rejected in favour of these two separate mechanisms
 - [[capabilities/memory]] — the memory store as a capability page
 - [[capabilities/telegram-frontend]] — bridge session continuity note
 - [[architecture/overview]] — session model correction (bridge-restart survival is now a documented exception)

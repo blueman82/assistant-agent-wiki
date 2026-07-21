@@ -1,5 +1,7 @@
 # AGENTS.md — vault contract
 
+wiki-vault: true
+
 This vault's own copy of the rules that govern it. It exists so the contract
 travels with the content: this wiki is a separate git repo from
 `assistant-agent`, so an agent editing a page here has no path up to that

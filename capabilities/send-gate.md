@@ -2,7 +2,7 @@
 title: "Send Gate"
 type: capability
 created: 2026-07-07
-last_updated: 2026-07-15
+last_updated: 2026-07-21
 sources: ["rachel.ts", "gate/sendGate.ts", "gate/surfaces/telegram.ts", "gate/surfaces/queue.ts", "bridge/telegram-bridge.ts", "bridge/notify.ts", "proactive/push.ts", "prompts/system.md", "AGENTS.md"]
 tags: [capability, gate, security, slack, calendar, telegram]
 ---
@@ -28,7 +28,7 @@ Gmail has no send tool (only `create_draft` + read/label/search) — nothing to 
 ## How it works
 
 - **Per-item, one-shot**: approval is bound to a SHA-256 hash of the canonicalised (sorted-key) tool input. Approving one message never approves a different one. An approval is consumed on first use — a replay of the same hash is denied.
-- **Fail-closed**: no approval within the gate's own internal timer → denied with a message telling the agent to redraft or ask Gary directly. A hook callback that throws is also denied, not allowed through (the SDK itself is fail-*open* on both thrown exceptions and timeout — the gate does not rely on it).
+- **Fail-closed**: no approval within the gate's own internal timer → denied with a message telling the agent to redraft or ask Gary directly. A hook callback that throws is also denied, not allowed through. The SDK's own behaviour is version-dependent and split across the two failure modes (live spikes, `AGENTS.md`): a hook that **throws** is swallowed and the tool proceeds — fail-*open*, re-verified on `@anthropic-ai/claude-agent-sdk` 0.3.216 (2026-07-21); a hook resolving after its declared `HookCallbackMatcher.timeout` now fails **closed** on 0.3.216 (1s declared timeout vs 8s hook → blocked), where the 0.2-era SDK let the tool proceed. The gate does not rely on either: the try/catch is load-bearing because the throw path is still fail-open, and the internal deny-timer (strictly shorter than any matcher timeout, so it still settles first) is now defence-in-depth rather than the sole timeout enforcement. Do not relax either — the split changed once across a minor version and can change again.
 - **Approval surfaces** (first answer wins): terminal y/n (interactive TTY), Telegram inline Approve/Deny buttons, or the dashboard queue file under `~/.claude/coderails-dashboard/approvals/` (`DEFAULT_QUEUE_DIR` in `gate/surfaces/queue.ts`).
 - **Telegram surface routing**: the Telegram approval surface (`gate/surfaces/telegram.ts`) does not poll Telegram itself — it exposes `handleCallbackQuery`, and the Telegram front-end bridge (`bridge/telegram-bridge.ts`, see [[capabilities/telegram-frontend]]) owns the single `getUpdates` long-poll loop and feeds matching `callback_query` updates into it. A button tap is routed ahead of any queued chat turn, since a gate decision may be blocking a turn already in flight.
 - **Bash defense-in-depth**: a `Bash` command matching a known send-API pattern (Slack `chat.postMessage`, Telegram `sendMessage`, Gmail `messages/send`, a `POST` to the Calendar events endpoint) is denied outright and redirected to the corresponding MCP tool.

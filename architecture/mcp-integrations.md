@@ -2,7 +2,7 @@
 title: "MCP Integrations"
 type: architecture
 created: 2026-06-07
-last_updated: 2026-07-08
+last_updated: 2026-07-21
 sources: ["rachel.ts"]
 tags: [architecture, mcp, tools]
 ---
@@ -23,7 +23,7 @@ No MCP servers are spawned by the Rachel process. All MCP tools come from existi
 
 ## Key wiring detail
 
-The Chrome extension requires `extraArgs: { "chrome": null }` in the SDK query options (rachel.ts line ~92). Without this, `mcp__claude-in-chrome__*` tools won't appear to the agent even if the extension is connected.
+The Chrome extension requires `extraArgs: { "chrome": null }` in the SDK query options (`rachel.ts:191`, verified 2026-07-21). Without this, `mcp__claude-in-chrome__*` tools won't appear to the agent even if the extension is connected.
 
 ## mcpServers
 

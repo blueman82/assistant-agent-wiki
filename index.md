@@ -12,7 +12,7 @@ Schema and workflows: see `AGENTS.md` in the project directory (`~/Github/assist
 
 ## Capabilities
 
-- [[capabilities/tasks]] — task schema (two frontmatter shapes: Gary-tasks vs. loop-launcher), path, CRUD behaviour; `tasks/*.md` gitignored as of PR #43 (personal files stay on disk, untracked; only `EXAMPLE-task.md` + 5 infrastructure files remain tracked); also the single destination for actionable backlog ingested from `raw/` across all repos, via `AGENTS.md`'s Step 0 triage rule (`Repo: <path>` line for non-`assistant-agent` items, no per-repo task storage)
+- [[capabilities/tasks]] — task schema (two frontmatter shapes: Gary-tasks vs. loop-launcher), path, CRUD behaviour; `tasks/*.md` gitignored as of PR #43 (personal files stay on disk, untracked; only `EXAMPLE-task.md` + the 3 launchd plists remain tracked — `inbox-brief.md`/`proactive-calendar.md` were untracked by `a505042`, so a fresh clone lacks two runtime files `install.sh` still installs jobs for); also the single destination for actionable backlog ingested from `raw/` across all repos, via `AGENTS.md`'s Step 0 triage rule (`Repo: <path>` line for non-`assistant-agent` items, no per-repo task storage)
 - [[capabilities/slack]] — personal Slack read + send, confirm-before-send, search consent rules
 - [[capabilities/email]] — Not yet documented.
 - [[capabilities/calendar]] — Not yet documented.

@@ -89,3 +89,24 @@ about the file's location would not have.
 Filed as [[decisions/repo-depersonalisation_2026-07-21]]. Corrected a now-stale
 claim in [[capabilities/tasks]] (the plists are tracked deliberately, not
 because they escaped a `.md`-only pattern).
+
+## [2026-07-21] ingest | cross-platform persistent memory (PRs #49-#52, one cluster)
+
+New pages: [[sources/2026-07-21-cross-platform-persistent-memory]] (cluster
+source), [[capabilities/memory]] (the fact-based store + deterministic prompt
+injection), [[decisions/2026-07-21-rejected-shared-session-thread]] (why one
+shared session thread was rejected in favour of two separate mechanisms).
+
+Corrected a stale claim in [[architecture/overview]]'s Session model: "one
+long-lived process, one session... until /reset or process exit" no longer
+holds for the Telegram bridge specifically, which now persists sessionId
+across a process restart (PR #51/#52). Added the `RACHEL_MEMORY_PATH` and
+`RACHEL_SESSION_FILE` env seams to its Config table. Added a session-
+continuity note to [[capabilities/telegram-frontend]]. Updated index.md
+across Architecture/Capabilities/Decisions/Sources sections.
+
+Note: Step 3 (discuss key takeaways with the user) was not performed
+interactively — this ingest ran as a headless loop-boundary duty delegated by
+an orchestrating agent with no attached human this turn; `wiki.supervision`
+is unset (defaults to `discuss`) in this vault's workflow.config.yaml, so this
+is a documented deviation from the skill's default gate, not a silent skip.

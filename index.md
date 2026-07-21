@@ -7,7 +7,7 @@ Schema and workflows: see `AGENTS.md` in the project directory (`~/Github/assist
 
 ## Architecture
 
-- [[architecture/overview]] — plumbing/brain split, SDK wiring, session continuity
+- [[architecture/overview]] — plumbing/brain split, SDK wiring, session continuity (bridge-restart persistence exception since PR #51)
 - [[architecture/mcp-integrations]] — Gmail, Google Calendar, Slack, Chrome extension, mcp-exec
 
 ## Capabilities
@@ -23,6 +23,7 @@ Schema and workflows: see `AGENTS.md` in the project directory (`~/Github/assist
 - [[capabilities/inbox-brief]] — recommend-only Gmail sweep, six-tier taxonomy; Urgent/Action-required threads pushed individually through the proactive chokepoint, the rest as a batch brief via `notify.ts`; scheduled 4x/day + dashboard button + on-request (PRs #23, #27, #28)
 - [[capabilities/proactive-layer]] — Rachel's proactive layer: the `push.ts` chokepoint (dedup, quiet hours 22:30–08:00, 10/day budget), the 30-min deterministic sweep (PR-red, bridge liveness, calendar <2h escalation), headless one-shots with `RACHEL_ALLOWED_TOOLS` narrowing, and the security invariants (PRs #24–#26, #28)
 - [[capabilities/installation]] — one-command installer: stamps + installs + verifies all four Rachel launchd services, config bootstrap-if-absent, truthful PASS/FAIL contract, launchd teardown-race handling (PRs #30-#32)
+- [[capabilities/memory]] — persistent file-based fact store at `~/.rachel/memory/`, deterministically injected into the system prompt every turn via `composeSystemPrompt`; write/recall/update-over-duplicate/delete-when-wrong/self-maintenance contract; 32 KiB size guard with UTF-8-safe truncation (PRs #49-#52)
 
 ## Patterns
 
@@ -36,6 +37,7 @@ Schema and workflows: see `AGENTS.md` in the project directory (`~/Github/assist
 ## Decisions
 
 - [[decisions/repo-depersonalisation_2026-07-21]] — what was untracked from the public repo and why: personal task files, `.claude/`, `evals/`, `workflow.config.yaml`; the system prompt split into a generic tracked `system.md` plus a gitignored `system.local.md` resolved by `proactive/systemPrompt.ts`; and the one removal that had to be **reverted** — the launchd plists are install machinery, not personal content, and untracking them failed 26 tests on a clean checkout. Carries the general lesson: "is this file personal?" and "does the repo need this file?" are different questions, and only a clean-checkout run settles the second.
+- [[decisions/2026-07-21-rejected-shared-session-thread]] — a single shared session thread across terminal and Telegram was considered and rejected: concurrent-resume forks the SDK's parentUuid chain, compaction makes a persisted thread non-durable anyway (the decisive reason), and headless one-shots would pollute the operator's personal thread. Shipped instead: a separate memory store (durable, survives compaction) + narrowly-scoped bridge-only session persistence (Telegram continuity only)
 
 ## Sources
 
@@ -51,3 +53,4 @@ Schema and workflows: see `AGENTS.md` in the project directory (`~/Github/assist
 - [[sources/2026-07-15-proactive-layer]] — PRs #24–#26 + #28: push chokepoint, deterministic sweep, bridge heartbeat + closed liveness boundary, one-shot wiring with tool narrowing; deployed live 2026-07-15
 - [[sources/2026-07-15-installer]] — PRs #30-#32: one-package installer, push.ts TDZ hotfix, live-found launchd teardown race; clean-slate cycle verified live
 - [[sources/2026-07-20-persistent-calendar-index]] — PR #48: persistent calendar index (upcoming 7-14d + recent 30d) auto-refreshed 4x/day; solves cross-session calendar awareness
+- [[sources/2026-07-21-cross-platform-persistent-memory]] — PRs #49-#52: memory store contract + deterministic prompt injection + 32 KiB UTF-8-safe size guard, plus bridge-only session persistence and the one-writer invariant runtime hole found and fixed post-merge

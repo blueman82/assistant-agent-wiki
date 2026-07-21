@@ -2,9 +2,9 @@
 title: "Telegram Front-End"
 type: capability
 created: 2026-07-07
-last_updated: 2026-07-18
-sources: ["bridge/telegram-bridge.ts", "bridge/api.ts", "bridge/speech.ts", "bridge/launchd.plist", "bridge/notify.ts", "rachel.ts", "gate/surfaces/telegram.ts", "proactive/push.ts", "proactive/sweep.ts", "prompts/system.md", "CLAUDE.md", "AGENTS.md"]
-tags: [capability, telegram, bridge, front-end, emit-channel, image-reception, voice, stt, tts, self-monitoring, heartbeat, proactive, character-count]
+last_updated: 2026-07-21
+sources: ["bridge/telegram-bridge.ts", "bridge/api.ts", "bridge/speech.ts", "bridge/launchd.plist", "bridge/notify.ts", "rachel.ts", "gate/surfaces/telegram.ts", "proactive/push.ts", "proactive/sweep.ts", "proactive/sessionPersist.ts", "prompts/system.md", "CLAUDE.md", "AGENTS.md"]
+tags: [capability, telegram, bridge, front-end, emit-channel, image-reception, voice, stt, tts, self-monitoring, heartbeat, proactive, character-count, session-persistence]
 ---
 
 ## What it does
@@ -12,6 +12,8 @@ tags: [capability, telegram, bridge, front-end, emit-channel, image-reception, v
 A second front-end onto the same Rachel, alongside the terminal REPL. `bridge/telegram-bridge.ts` forwards Gary's Telegram chat messages into the same turn loop (`runTurn`, exported from `rachel.ts`) the terminal uses, and relays replies back as chunked Telegram messages (Telegram caps a single message at 4096 characters). Session continuity, tool access, and agent behaviour are identical to the terminal — only the transport differs.
 
 Single-user: the bridge only accepts messages and approval-button taps from Gary's own configured Telegram chat/user ID (`~/.rachel/telegram.json` or `RACHEL_TELEGRAM_TOKEN`/`RACHEL_TELEGRAM_CHAT_ID`). Anything else is logged and dropped — there is exactly one authorised operator, no multi-user routing.
+
+**Session survives a bridge restart (since PR #51/#52, 2026-07-21).** Unlike the terminal REPL, a Telegram conversation is no longer wiped by a bridge process restart (launchd crash-restart, redeploy, etc.). `proactive/sessionPersist.ts` persists `sessionId` to `<repo>/.rachel/bridge-session.json` (gitignored) behind the `RACHEL_SESSION_FILE` env seam, set only in `bridge/launchd.plist`; `hydratePersistedSession()` is called once from this bridge's CLI guard on startup, restoring the last session before the poll loop begins. This is a narrowly-scoped exception for this bridge alone, not a general session-persistence feature — see [[architecture/overview]]'s Session model section and [[capabilities/memory]] for the separate, cross-surface memory store, and [[decisions/2026-07-21-rejected-shared-session-thread]] for why a shared thread across terminal+Telegram was rejected instead.
 
 ## Update-routing (the ownership split)
 
@@ -172,3 +174,6 @@ Not part of this bridge — a separate, standalone sender for a different execut
 - [[capabilities/proactive-layer]] — the chokepoint the bridge's own alerts now route through, and the sweep that watches the bridge from outside
 - [[sources/2026-07-15-proactive-layer]] — PR #26: heartbeat, chokepoint-routed alerts, closed liveness boundary
 - [[investigations/2026-07-18-telegram-voice-stt-tts-spec-gaps]] — spec-vs-code review the voice feature (Tasks 4, 6-9) was built against, and PR #42's resolution of gap 3 (the unsourced 1000-char cap and its removal)
+- [[capabilities/memory]] — the cross-surface memory store, separate from this bridge's session-persistence exception
+- [[sources/2026-07-21-cross-platform-persistent-memory]] — PRs #49-#52: memory store + bridge session persistence + the one-writer invariant fix
+- [[decisions/2026-07-21-rejected-shared-session-thread]] — why bridge session persistence stays narrowly scoped rather than becoming a shared thread

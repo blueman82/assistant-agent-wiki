@@ -1,6 +1,6 @@
 ---
 title: "Repo depersonalisation — what was untracked, what was kept, and why"
-type: decision
+type: investigation
 created: 2026-07-21
 last_updated: 2026-07-21
 status: implemented

@@ -1,6 +1,6 @@
 ---
 title: "Rejected: one shared session thread across terminal and Telegram"
-type: decision
+type: investigation
 created: 2026-07-21
 last_updated: 2026-07-21
 status: rejected

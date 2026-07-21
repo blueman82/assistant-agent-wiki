@@ -112,3 +112,29 @@ is unset (defaults to `discuss`) in this vault's workflow.config.yaml, so this
 is a documented deviation from the skill's default gate, not a silent skip.
 
 ## [2026-07-21] lint | Post-ingest lint of the cross-platform persistent memory cluster (PRs #49-#52), 34 non-template pages. Verified against source, not taken on the wiki's own word: `rachel.ts:246` (`prompt: composeSystemPrompt(systemPrompt, resolveMemoryPath())`) matches capabilities/memory.md and sources/2026-07-21-cross-platform-persistent-memory.md exactly; the env-delete fix for the one-writer hole is real at rachel.ts's session-options block (~line 263, confirmed by inspection); PR SHAs confirmed by `git log` (a002085=#49, 7be07d2=#50, 7f8d2a4=#51, f38c074=#52); `.rachel/bridge-session.json` exists on disk at the repo-local (not `~/.rachel/`) path the pages claim, and is gitignored as stated. **0 contradictions** — architecture/overview.md and capabilities/telegram-frontend.md are the only two pages describing session-persistence behaviour and both carry the bridge-restart exception consistently; no other page still states the old "one long-lived process, one session until /reset or exit" claim unqualified. **0 orphans** among the 7 touched/new pages — sources/2026-07-21-cross-platform-persistent-memory.md, capabilities/memory.md, and investigations/2026-07-21-rejected-shared-session-thread.md are all linked from index.md and cross-link each other plus architecture/overview.md and capabilities/telegram-frontend.md. The only orphan in the whole vault remains raw/task_to_do.md, already triaged to assistant-agent/tasks/ per a prior lint — pre-existing, outside this ingest's scope. **0 stale pages** at the project's 90-day threshold (AGENTS.md) — oldest is sources/karpathy-llm-wiki.md at 45 days, an exempt external reference; every page touched by this cluster carries last_updated: 2026-07-21. Frontmatter consistent (title/type/created/last_updated/sources/tags on all three new pages). Not fixed, not this cluster's scope: capabilities/tasks.md's already-flagged live gap (scripts/install.sh still installs launchd jobs for two task files a fresh clone no longer has) is unrelated to memory/session and untouched by this ingest — left as a standing flagged-for-Gary item from the 2026-07-21 full-vault lint.
+
+## [2026-07-21] fix | taxonomy correction: decisions/ eliminated per Gary's ruling
+
+`decisions/` was not a page type AGENTS.md sanctions (architecture/,
+capabilities/, patterns/, investigations/, sources/, templates/ only), yet two
+tracked pages lived there: [[investigations/2026-07-21-rejected-shared-session-thread]]
+(created this cluster) and [[investigations/2026-07-21-repo-depersonalisation]]
+(pre-existing, created earlier today). Gary ruled: nothing may live outside the
+documented taxonomy. Both moved to `investigations/` via `git mv` (history
+preserved), frontmatter `type:` corrected from `decision` to `investigation` on
+both, every `[[decisions/...]]` wikilink across the vault rewritten to
+`[[investigations/...]]` (index.md, log.md's own prior entries, capabilities/memory.md),
+and index.md's separate `## Decisions` section merged into `## Investigations`.
+
+`repo-depersonalisation_2026-07-21.md` was renamed to `2026-07-21-repo-depersonalisation.md`
+in the move — investigations/ already enforces a strict `YYYY-MM-DD-slug.md`
+prefix (both pre-existing pages follow it), so the old underscore-date suffix
+would have been the one non-conforming filename in the directory. Noted here
+rather than done silently, per instruction.
+
+Also surveyed: `assets/` (empty, 0 tracked) and `logs/` (1 untracked hook
+artifact, 0 tracked) are technically off-taxonomy directories too, but neither
+pollutes the tracked vault — left alone, not this fix's concern.
+
+Verified zero remaining `decisions/` references vault-wide via
+`grep -rn "decisions/" --include="*.md" .` returning nothing.

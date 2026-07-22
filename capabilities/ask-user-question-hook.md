@@ -52,6 +52,10 @@ Case 4 specifically tests the hook's visible effect: given a prompt that would n
 
 **Result**: 4/4 pass (E3 eval run 2026-07-19).
 
+Two sub-findings recorded in the eval run but not previously written up here:
+- **Case 2 anomaly**: Rachel's tool trace showed an unprompted detour investigating this repo's own agentic-loop orchestration state (progress.json, teams/ config, git log, typecheck, npm test) before answering — likely triggered by the prompt's word "team" combined with Bash access to this workspace. Didn't affect the final answer (still a clean pass), but flagged as a behavior anomaly worth watching for in future prompts that use ambiguous repo-adjacent nouns.
+- **Case 4 keyword-check caveat**: the automated grep for this case (`which|what.*name|what.*specific`) matched the eval's own "expected" field, not Rachel's actual response text — the response phrased things as "what options A and B refer to", which the keyword pattern doesn't catch. The case's pass verdict rests on manual reasoning against the substantive criteria, not the keyword-grep proxy. Worth remembering if this eval is ever re-run in a fully automated (no manual read) mode.
+
 ## Relationships
 
 - [[capabilities/send-gate]] — sibling PreToolUse hook, gating send-class tools

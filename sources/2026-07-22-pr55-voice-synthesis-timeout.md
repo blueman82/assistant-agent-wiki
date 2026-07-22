@@ -2,7 +2,9 @@
 title: "PR #55 — voice replies failed on long text: the flat 20s synthesis timeout"
 type: source
 origin: "assistant-agent PR #55 (merged 08f3022, 2026-07-22)"
-date: 2026-07-22
+created: 2026-07-22
+last_updated: 2026-07-22
+sources: ["bridge/speech.ts", "bridge/speech.test.ts", "bridge/telegram-bridge.ts", "scripts/speech/synthesize.py"]
 tags: [source, telegram, voice, tts, bridge, timeout, rca]
 ---
 

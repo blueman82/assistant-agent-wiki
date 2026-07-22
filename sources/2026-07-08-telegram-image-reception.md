@@ -2,9 +2,9 @@
 title: "PR #17 — Telegram Image Reception"
 type: source
 created: 2026-07-08
-last_updated: 2026-07-08
+last_updated: 2026-07-22
 sources: ["bridge/telegram-bridge.ts", "bridge/api.ts", "bridge/telegram-bridge.test.ts", "prompts/system.md"]
-tags: [telegram, bridge, image, photo, capability, security]
+tags: [telegram, bridge, image, photo, capability, security, superseded-pdf-scope]
 ---
 
 ## Origin
@@ -25,6 +25,8 @@ Rachel can now receive photos and image documents sent by Gary via Telegram. Pre
 **20 MB limit guard**: If Telegram's `getFile` API returns no `file_path` (happens for files >20 MB), a clear error is thrown — "file may exceed the 20 MB API limit" — rather than producing a confusing HTTP 404 on the download.
 
 **PDF scope dropped**: An initial implementation accepted `application/pdf` documents. Removed as unasked-for scope (CLAUDE.md: "No features beyond what was asked").
+
+> **Superseded 2026-07-22.** This exclusion held for two weeks. PR #54 (`feature/telegram-pdf-ingestion`, merged `6e96a41`) reintroduced `application/pdf` document support — not a re-litigation of this decision but a new request: Gary explicitly asked ("I need you to be able to read PDF files"), so the YAGNI basis for dropping it here no longer applies. This entry is left as-is rather than rewritten: it accurately records why PDF support was *out* of scope at the time PR #17 shipped. See [[sources/2026-07-22-telegram-pdf-ingestion]] for the reversal and [[capabilities/telegram-frontend]]'s "Image and PDF reception" section for the current, merged behaviour.
 
 **Non-image reply**: Non-image documents receive an immediate user-facing reply rather than a silent drop.
 
@@ -54,3 +56,4 @@ Rachel is instructed (via `prompts/system.md`) to call `Read` on the path before
 
 - [[capabilities/telegram-frontend]] — the capability this PR extended
 - [[architecture/overview]] — `bridge/api.ts` role in the plumbing layer
+- [[sources/2026-07-22-telegram-pdf-ingestion]] — PR #54, which supersedes this page's "PDF scope dropped" decision by explicit later request

@@ -2,9 +2,9 @@
 title: "Telegram Front-End"
 type: capability
 created: 2026-07-07
-last_updated: 2026-07-21
+last_updated: 2026-07-22
 sources: ["bridge/telegram-bridge.ts", "bridge/api.ts", "bridge/speech.ts", "bridge/launchd.plist", "bridge/notify.ts", "rachel.ts", "gate/surfaces/telegram.ts", "proactive/push.ts", "proactive/sweep.ts", "proactive/sessionPersist.ts", "prompts/system.md", "CLAUDE.md", "AGENTS.md"]
-tags: [capability, telegram, bridge, front-end, emit-channel, image-reception, voice, stt, tts, self-monitoring, heartbeat, proactive, character-count, session-persistence]
+tags: [capability, telegram, bridge, front-end, emit-channel, image-reception, pdf-ingestion, voice, stt, tts, self-monitoring, heartbeat, proactive, character-count, session-persistence]
 ---
 
 ## What it does
@@ -65,13 +65,17 @@ That prompt rule is the primary fix but not the only one. `bridge/api.ts` export
 
 **Design decision — no `parse_mode`, ever.** Sending with `parse_mode: HTML` or `MarkdownV2` was considered and rejected: a single malformed entity in the reply causes Telegram to reject the whole `sendMessage` call with an HTTP 400, silently losing the message. Deterministic string stripping can't fail that way — worst case is over-aggressive stripping of a literal asterisk, never a lost reply. Same reasoning ruled out wrapping replies in a structured JSON envelope. Belt-and-braces: the prompt rule is meant to stop markdown at the source; the sanitiser is the backstop for when the model writes it anyway.
 
-## Image reception (PR #17)
+## Image and PDF reception (PR #17; PDF added PR #54)
 
-Gary can send photos or image documents to Rachel via Telegram. The bridge detects these and forwards them as a synthetic text turn.
+Gary can send photos, image documents, or PDF documents to Rachel via Telegram. The bridge detects these and forwards them as a synthetic text turn.
 
 **Photo messages**: Telegram sends a `photo` array of multiple compressed variants. The bridge picks the last (largest) entry — `photo[photo.length - 1]` — uses its `file_id`, and derives a `.jpg` extension.
 
-**Image document messages**: Documents with `mime_type` starting with `image/` are accepted. The extension is derived from the document's `file_name` (dot-split) or from the MIME type if no filename is present. Non-image documents (any other MIME) receive an immediate reply: "I can only receive images. Try sending a JPEG, PNG, etc." — `runTurn` is never called.
+**Image document messages**: Documents with `mime_type` starting with `image/` are accepted. The extension is derived from the document's `file_name` (dot-split) or from the MIME type if no filename is present. Documents that are neither `image/*` nor `application/pdf` receive an immediate reply: "I can only receive images or PDFs. Try sending a JPEG, PNG, or PDF." — `runTurn` is never called.
+
+**PDF document messages (PR #54, `feature/telegram-pdf-ingestion`, merged `6e96a41`).** The document handler now also accepts `mime_type === "application/pdf"`, tracked via a boolean `isPdf` (`bridge/telegram-bridge.ts:626,636`). Download and temp-file mechanics are identical to an image document — same `downloadFileFn` seam, same `~/.rachel/tmp/<fileId>.<ext>` path — but the FIFO tag differs: `const tag = isPdf ? "document" : "image"` (line 655), so a PDF is queued as `[document: /path]` rather than `[image: /path]`. This is deliberate, not cosmetic: a PDF isn't read via vision, so Rachel's contract for it is "call `Read` on this path" (native PDF support in the `Read` tool), not "look at this image" — see the system.md contract below. `PDF scope dropped` from [[sources/2026-07-08-telegram-image-reception]] (PR #17) is the same decision reversed here — see that page's supersession note.
+
+**Dot-less-filename extension bug (commit `197a14f`, post-review fix same day as PR #54).** The `file_name` extension-derivation fallback (`bridge/telegram-bridge.ts:644`) was hardcoded to `"jpg"` when a document arrived with no dot in its filename (e.g. a Telegram upload literally named `invoice`) — this silently saved PDF bytes to a `.jpg`-suffixed temp file, which the `Read` tool would then fail to decode as either format. Fixed by making the fallback type-aware: `ext = dot >= 0 ? msg.document.file_name.slice(dot + 1) : (isPdf ? "pdf" : "jpg")`. **Lesson for future document-type additions**: any extension-derivation fallback must key off the MIME-derived type, not assume the filename will contain a dot — a bare "default to jpg" fallback silently mis-tags any newly added non-image document type.
 
 **Download flow**:
 1. `bridge/api.ts`'s `downloadFile(config, fileId, destPath)` calls Telegram's `getFile` API to resolve a download URL.
@@ -80,14 +84,17 @@ Gary can send photos or image documents to Rachel via Telegram. The bridge detec
 4. The file is streamed to `~/.rachel/tmp/<fileId>.<ext>` (directory created on first use).
 5. `downloadFileFn` is injectable via `CreateBridgeOptions` so tests never touch the filesystem or network.
 
-**FIFO input format**: After download the bridge pushes `[image: /absolute/path/to/file.jpg]` (with caption appended on a new line if present) into the turn FIFO, exactly like a text message.
+**FIFO input format**: After download the bridge pushes `[image: /absolute/path/to/file.jpg]` (with caption appended on a new line if present) into the turn FIFO, exactly like a text message. A PDF pushes `[document: /absolute/path/to/file.pdf]` instead — same shape, different tag, chosen by the `isPdf` boolean at push time.
 
 **Rachel's response contract**: `prompts/system.md` now instructs Rachel:
 > When a message begins with `[image: <path>]`, always call the `Read` tool on that absolute path to view the image, then respond based on what you see.
 
-**Known debt**:
-- Temp files in `~/.rachel/tmp/` are never cleaned up — the directory grows over time. No cleanup is scheduled.
-- No abort signal is threaded into `downloadFile` — a hung Telegram CDN will stall the entire poll loop until Node's default fetch times out.
+And, added by PR #54 as a parallel "Receiving PDFs from Telegram" section:
+> When a message begins with `[document: <path>]`, always call the `Read` tool on that absolute path to read the PDF content, then respond based on what's in it.
+
+**Known debt** (both apply to PDFs equally now — PR #54 didn't introduce or fix either):
+- Temp files in `~/.rachel/tmp/` are never cleaned up — the directory grows over time. No cleanup is scheduled. Every ingested PDF adds to the same unbounded directory as images and voice-note intermediates.
+- No abort signal is threaded into `downloadFile` — a hung Telegram CDN will stall the entire poll loop until Node's default fetch times out. Also no file-size cap on the download itself (Telegram's own 20 MB `getFile` ceiling is the only limit, per the pre-existing guard below) — a pre-existing gap, not introduced or fixed by PR #54.
 
 ## Voice in/out — STT+TTS (Tasks 4, 6-9, PR #42)
 
@@ -167,7 +174,8 @@ Not part of this bridge — a separate, standalone sender for a different execut
 - [[capabilities/send-gate]] — the approval surface whose callback delivery this bridge owns
 - [[architecture/overview]] — plumbing/brain split; the bridge is a second thin plumbing layer on top of the same `runTurn`
 - [[sources/2026-07-08-telegram-emit-channel]] — the PR that introduced the typed `TurnEmitKind` channel
-- [[sources/2026-07-08-telegram-image-reception]] — PR #17: image reception implementation, security decisions, known debt
+- [[sources/2026-07-08-telegram-image-reception]] — PR #17: image reception implementation, security decisions, known debt (see supersession note there re: PDF scope)
+- [[sources/2026-07-22-telegram-pdf-ingestion]] — PR #54: PDF document ingestion, the `[document: /path]` tag, and the dot-less-filename extension bugfix
 - [[sources/2026-07-14-bridge-self-monitoring]] — PRs #21 + #22: bridge health state machine, 409 backoff, fetch timeout, startup alert
 - [[capabilities/inbox-brief]] — first consumer of the standalone `notify.ts` outbound path
 - [[sources/2026-07-14-inbox-brief]] — PR #23: `notify.ts` design and rationale

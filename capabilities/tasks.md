@@ -2,9 +2,9 @@
 title: "Tasks Capability"
 type: capability
 created: 2026-06-07
-last_updated: 2026-07-21
+last_updated: 2026-07-22
 sources: ["prompts/system.md", "tasks/", "tasks/EXAMPLE-task.md", ".gitignore", "AGENTS.md"]
-tags: [capability, tasks]
+tags: [capability, tasks, loop-launcher, backgrounding]
 ---
 
 ## What it does

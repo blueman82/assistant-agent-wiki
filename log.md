@@ -171,3 +171,16 @@ both moved pages carry last_updated: 2026-07-21. raw/ has no untriaged
 backlog beyond the already-known task_to_do.md.
 
 ## [2026-07-22] ingest | Telegram PDF ingestion (assistant-agent PR #54, feature/telegram-pdf-ingestion, merged `6e96a41`; post-review bugfix commit `197a14f` same day). Rachel can now receive PDF documents via Telegram, alongside the existing photo/image-document path (PR #17): the document handler's mime check now also accepts `application/pdf` (tracked via a new `isPdf` boolean), sharing all download/temp-file mechanics with images but queuing to `runTurn` under a distinct FIFO tag, `[document: /path]`, rather than `[image: /path]` — a PDF is read via the `Read` tool's native PDF support, not vision, so `prompts/system.md` gained a parallel "Receiving PDFs from Telegram" section instructing Rachel accordingly. `197a14f` fixed a bug the code-reviewer caught during PR #54's own review: a dot-less document filename (no extension) fell back to a hardcoded `.jpg`, which for a PDF meant PDF bytes saved under an image extension that `Read` would fail to decode — fixed by making the fallback type-aware (`isPdf ? "pdf" : "jpg"`). This reverses an earlier decision: PR #17 (2026-07-08) explicitly dropped PDF support as "unasked-for scope" per CLAUDE.md's YAGNI rule; Gary this time explicitly asked for it, so the earlier exclusion's basis no longer holds. Updated capabilities/telegram-frontend.md (new "Image and PDF reception" section text, FIFO-format and known-debt lines extended to cover PDFs, frontmatter bumped); added a supersession note (not a rewrite) to sources/2026-07-08-telegram-image-reception.md's "PDF scope dropped" bullet, cross-linking forward to this PR; new sources/2026-07-22-telegram-pdf-ingestion.md; index.md's telegram-frontend and sources lines refreshed. Known debt (file-size cap, temp-file cleanup) is pre-existing and shared with the image path — noted as now-also-applying-to-PDFs, not re-opened as new debt. Verified against source this session: `bridge/telegram-bridge.ts` lines 622-674 (isPdf, tag const, FIFO push), `prompts/system.md` lines 77-83 (document-tag contract), CLAUDE.md's architecture bullet — all three confirmed to match actual merged code, no drift found. Lint scope: touched content only — no contradictions introduced (the PR #17 page's historical claim is preserved, only annotated; no other page still states PDF support as excluded).
+
+## [2026-07-22] ingest | assistant-agent PR #55 — voice-reply synthesis timeout
+
+Voice replies fell back to text on long input. Root cause: `SYNTHESIZE_TIMEOUT_MS` was a
+flat 20s while real synthesis of a 9696-char reply takes ~30s, so `execFile` killed the
+child. Fixed by scaling the budget with text length rather than bumping the constant.
+Also captured child stdout in the thrown error — mlx-audio prints its failure reason to
+stdout, which `synthesize()` was discarding, making the failure read as a bare progress bar.
+
+Pages: new [[sources/2026-07-22-pr55-voice-synthesis-timeout]]; updated
+[[capabilities/telegram-frontend]] (timeout contract + closed the unverified-long-reply gap),
+[[investigations/2026-07-18-telegram-voice-stt-tts-spec-gaps]] (gaps 3 and 6 resolved from
+the other direction), `index.md`.

@@ -4,7 +4,7 @@ type: capability
 created: 2026-07-07
 last_updated: 2026-07-22
 sources: ["bridge/telegram-bridge.ts", "bridge/api.ts", "bridge/speech.ts", "bridge/launchd.plist", "bridge/notify.ts", "rachel.ts", "gate/surfaces/telegram.ts", "proactive/push.ts", "proactive/sweep.ts", "proactive/sessionPersist.ts", "prompts/system.md", "CLAUDE.md", "AGENTS.md"]
-tags: [capability, telegram, bridge, front-end, emit-channel, image-reception, pdf-ingestion, voice, stt, tts, self-monitoring, heartbeat, proactive, character-count, session-persistence]
+tags: [capability, telegram, bridge, front-end, emit-channel, image-reception, pdf-ingestion, voice, stt, tts, self-monitoring, heartbeat, proactive, character-count, session-persistence, turn-timeout, backgrounding]
 ---
 
 ## What it does
@@ -98,7 +98,11 @@ And, added by PR #54 as a parallel "Receiving PDFs from Telegram" section:
 
 ## Voice in/out — STT+TTS (Tasks 4, 6-9, PR #42)
 
-Gary can send Telegram voice notes to Rachel and get spoken replies back, using local STT/TTS — no cloud speech API. `bridge/speech.ts` shells out to a dedicated Python 3.12 venv (`~/.rachel/venvs/speech`, `scripts/speech/setup.sh`) via `execFile` with a timeout, mirroring `proactive/sweep.ts`'s injectable exec-function pattern: `transcribe()` (mlx-whisper, 30s timeout), `synthesize()` (mlx-audio/Kokoro, 20s timeout), `convertToOgg()` (ffmpeg → Opus/OGG for Telegram, 15s timeout). All three throw on nonzero exit/timeout rather than returning a sentinel; callers decide the fallback.
+Gary can send Telegram voice notes to Rachel and get spoken replies back, using local STT/TTS — no cloud speech API. `bridge/speech.ts` shells out to a dedicated Python 3.12 venv (`~/.rachel/venvs/speech`, `scripts/speech/setup.sh`) via `execFile` with a timeout, mirroring `proactive/sweep.ts`'s injectable exec-function pattern: `transcribe()` (mlx-whisper, 30s timeout), `synthesize()` (mlx-audio/Kokoro, **length-scaled timeout** — see below), `convertToOgg()` (ffmpeg → Opus/OGG for Telegram, 15s timeout). All three throw on nonzero exit/timeout rather than returning a sentinel; callers decide the fallback.
+
+**The synthesis timeout scales with text length (PR #55).** It was a flat `20_000` until 2026-07-22, when a 9696-char voice reply fell back to text: real synthesis of that reply takes ~30s, so `execFile` killed the child at 20s. `synthesizeTimeoutMs(textLength)` now computes a 30s floor (cold model load measured at ~6s, with headroom) plus 10ms/char — roughly 3x the measured 3.1ms/char worst case — capped at 300s so a runaway reply can't hang the bridge. It is exported so callers and tests assert the budget for a given length rather than pinning a constant. **Scaling was chosen over a bigger constant deliberately: a bigger constant relocates the cliff, it doesn't remove it.** Measured on host: 210 chars → 6s, 9800 chars → 25s, 9696 chars of prose → 30s.
+
+**`synthesize()` surfaces child stdout in its thrown error (PR #55).** mlx-audio's `generate_audio` catches every exception, prints the reason with a bare `print()` — *stdout* — then returns normally without writing a file. `synthesize()` originally read only stderr, so the one place the reason was recorded got discarded, and a failure logged as a bare model-download progress bar. `scripts/speech/synthesize.py` needed no change: it already exits 1 and already names the no-output condition on stderr. See [[sources/2026-07-22-pr55-voice-synthesis-timeout]].
 
 **Inbound.** `handleMessage`'s `msg.voice` branch (`bridge/telegram-bridge.ts`) downloads the `.ogg` via the existing `downloadFileFn` seam, transcribes it locally, and pushes the transcript onto the FIFO. Download or transcription failure never silently drops the message — each gets its own user-facing text reply ("Failed to download...", "I couldn't transcribe that..."). The downloaded `.ogg` is best-effort unlinked after transcription (success or failure).
 
@@ -115,6 +119,15 @@ Gary can send Telegram voice notes to Rachel and get spoken replies back, using 
 - **`sendVoiceFn` is unchecked against Telegram's own voice-message size ceiling.** If a long synthesized `.ogg` exceeds it, Telegram would presumably reject the `sendVoice` call, which would throw and fall back to text — but this path has never executed. It's an inferred failure mode from the fallback design, not an observed one.
 
 **Real long-reply synthesis is unverified.** The cap made synthesis above 1000 characters unreachable in the running system until PR #42, and the test suite stubs `synthesizeFn`/`convertToOggFn`/`sendVoiceFn` throughout — so no real Kokoro synthesis of a long reply, and no real oversized-`.ogg` `sendVoice` call, has ever actually round-tripped end to end. `npm run typecheck` and `npm test` (391/391) are clean as of PR #42, but that only confirms the stubbed logic paths, not real synthesis behaviour at length. See [[investigations/2026-07-18-telegram-voice-stt-tts-spec-gaps]] (gap 3) for the fuller spec-vs-code review this was resolved against. Gary independently confirmed a real over-1000-char voice reply went out correctly after PR #42 landed (observed live in a Telegram exchange the same day), which is the first real-world signal on this gap — still not a substitute for an explicit end-to-end test.
+
+> **CLOSED 2026-07-22 (PR #55).** A real end-to-end long-reply round-trip now exists as a
+> frozen eval, run against the real venv rather than stubs: 9696 chars → real mlx-audio
+> synthesis → real ffmpeg → a playable OGG/Opus (2,304,783 bytes) in 31.6s, with a negative
+> control proving the check can fail. It lives outside `npm test` by design — `bridge/speech.test.ts`
+> carries a grep guard forbidding any test in that file from spawning a real subprocess.
+> This also produced the first real failure at length: the flat 20s synthesis timeout above.
+> **Still untested: the `sendVoice` size ceiling** — the 2.3 MB OGG went through without
+> hitting a limit, so the ceiling is unhit rather than cleared.
 
 **Character count — log + caption (commit `6f409be`, merged directly to `main`, no PR).** After the cap's removal, a long voice reply gave Gary no way to gauge reply length from the Telegram UI alone. `drainFifo` now computes `` `${spoken.length} chars` `` from the same `stripMarkdown`-sanitised text handed to `synthesizeFn`, logs it server-side (`console.log("[telegram-bridge] voice reply: N chars")`) immediately before synthesis starts, and passes it as the third (optional) argument to `sendVoiceFn` — which `bridge/api.ts`'s `sendVoice(config, audioPath, caption?)` appends to the multipart form as Telegram's native `caption` field on the voice note, so the count is visible in the Telegram UI right next to the voice bubble, not just in logs. The param is optional and additive: existing `sendVoiceFn` call sites/mocks with the old two-arg shape still typecheck. Built TDD (RED confirmed for both the `sendVoice` caption-forwarding behaviour and the bridge-level log/caption wiring before implementing); `npm run typecheck` and `npm test` (395/395) clean post-merge.
 
@@ -145,6 +158,39 @@ The bridge watches its own health so a failure surfaces on Telegram, instead of 
 **Testability.** `conflictBackoffMs` is injectable via `CreateBridgeOptions` so tests exercise the backoff and threshold-exit paths without real 65s waits.
 
 See [[sources/2026-07-14-bridge-self-monitoring]] for the PR #21/#22 design and rationale, and [[sources/2026-07-15-proactive-layer]] for the PR #26 layer on top.
+
+## Turn timeout, duration logging, and ad-hoc backgrounding (PR #56)
+
+`drainFifo` is single-flight, so a single hung turn would otherwise wedge the whole message
+queue silently. `DEFAULT_TURN_TIMEOUT_MS` (10 minutes) aborts any turn that runs past it and
+moves on to the next queued message. This ceiling is a deliberate wedge detector, not a
+performance tuning knob — it is not going to be raised by env var (rejected explicitly, see
+[[sources/2026-07-22-adhoc-background-escalation]]: no per-line duration data existed to justify
+a specific bump, and every added minute is added wedge time before a hang is even noticed).
+
+**Duration logging (PR #56).** Every turn now logs its outcome with elapsed time, computed from
+`Date.now()` (not the `nowFn()` seam used for timestamps elsewhere — the test suite's clock
+seams are frozen constants, so routing duration through them would report 0ms):
+- Completed normally: `turn completed in <ms>ms`.
+- Errored: `turn failed after <ms>ms` — tracked via a `turnErrored` flag set in the turn's catch
+  block, and deliberately excluded from the "completed" log so a crash doesn't contaminate the
+  duration data the log exists to collect.
+- Timed out: the existing cut-off message fires (see below), no separate duration log line.
+
+This instruments the 10-minute constant with real data, so a future decision to adjust it has
+evidence behind it rather than anecdote (the constant had fired 9 times in ~1.5 days pre-PR #56
+with no per-turn duration ever recorded).
+
+**Cut-off message now offers backgrounding.** The message sent on timeout —
+`"That turn ran past N minutes and I cut it off."` — now appends an offer to run the same
+request as a detached background loop instead of just "ask again". This is the bridge-level half
+of a larger feature; the spawning, task-file-synthesis, and constraints-block logic lives
+entirely in `prompts/system.md`'s "Ad-hoc backgrounding" section (the brain, not this file) — see
+[[sources/2026-07-22-adhoc-background-escalation]] for the full design, the three options
+weighed, and five review findings with lasting significance (frontmatter never reaching a
+spawned agent, the send-gate hole a detached `claude -p` inherits, quiet-hours deferral of
+loop-exit pings, pid-liveness verification, and the `nowFn()`-vs-`Date.now()` distinction this
+section's own logging depends on).
 
 ## External liveness watch (PR #26) — the boundary is closed
 
@@ -185,3 +231,4 @@ Not part of this bridge — a separate, standalone sender for a different execut
 - [[capabilities/memory]] — the cross-surface memory store, separate from this bridge's session-persistence exception
 - [[sources/2026-07-21-cross-platform-persistent-memory]] — PRs #49-#52: memory store + bridge session persistence + the one-writer invariant fix
 - [[investigations/2026-07-21-rejected-shared-session-thread]] — why bridge session persistence stays narrowly scoped rather than becoming a shared thread
+- [[sources/2026-07-22-adhoc-background-escalation]] — PR #56: the turn-timeout ceiling this bridge enforces, duration logging, and the ad-hoc backgrounding escape hatch (spawning logic lives in `prompts/system.md`, not this bridge)

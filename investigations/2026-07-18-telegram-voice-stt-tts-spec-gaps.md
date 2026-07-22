@@ -2,8 +2,8 @@
 title: "Telegram voice in/out (STT+TTS) spec — architecture cross-refs and unenforced assumptions"
 type: investigation
 created: 2026-07-18
-last_updated: 2026-07-18
-sources: ["docs/coderails/specs/telegram-voice-stt-tts.md", "bridge/telegram-bridge.ts", "bridge/api.ts", "proactive/sweep.ts", "prompts/system.md", "scripts/install.sh", "capabilities/telegram-frontend.md", "capabilities/installation.md"]
+last_updated: 2026-07-22
+sources: ["assistant-agent PR #55", "docs/coderails/specs/telegram-voice-stt-tts.md", "bridge/telegram-bridge.ts", "bridge/api.ts", "proactive/sweep.ts", "prompts/system.md", "scripts/install.sh", "capabilities/telegram-frontend.md", "capabilities/installation.md"]
 tags: [investigation, telegram, voice, stt, tts, bridge, spec-review]
 ---
 
@@ -31,11 +31,29 @@ Gary asked for a wiki cross-check of `docs/coderails/specs/telegram-voice-stt-tt
 
    > **RESOLVED 2026-07-18 (PR #42) — deliberately unbounded.** Task 8 first closed this gap by inventing a 1000-character threshold (`VOICE_REPLY_CHAR_LIMIT`) that silently sent text above it, plus a test pinning the number as if it were a requirement. The constant was unsourced — it appears nowhere in the spec or this page, and no synthesis-time measurement backed it. It surfaced as a user-visible bug: voice appeared to "work once, then stop" because the first reply was short and the second was a long status report. Gary's call was to drop the cap outright ("nothing should happen, just transcribe it"). Voice-origin turns now always answer in voice, whatever the length; text is the fallback only when synthesis genuinely fails. **The split-into-multiple-voice-messages story remains unwritten, and `sendVoice` is still unchecked against Telegram's size ceiling — removing the cap makes oversized `.ogg` files reachable for the first time.** Both are now live risks rather than theoretical ones, pending a real long-reply round-trip on the host.
 
+   > **THE ROUND-TRIP HAPPENED 2026-07-22 (PR #55) — and the failure was a third thing this
+   > item never named.** A 9696-char voice reply fell back to text. Not the OGG size ceiling,
+   > not the multi-message split: the **synthesis time budget**. `SYNTHESIZE_TIMEOUT_MS` was a
+   > flat `20_000` while real synthesis of that reply takes ~30s, so `execFile` killed the
+   > child at 20s. Fixed by making the budget a function of text length (30s floor + 10ms/char,
+   > capped at 300s) rather than bumping the constant, which would only have moved the cliff.
+   > See [[sources/2026-07-22-pr55-voice-synthesis-timeout]].
+   >
+   > **Still open from this item:** the split-into-multiple-voice-messages story, and
+   > `sendVoice` vs Telegram's size ceiling. The PR #55 round-trip produced a 2.3 MB OGG
+   > without hitting a limit, so the ceiling remains untested rather than cleared.
+
 4. **Rachel has no signal that a turn is voice-origin, and no spoken-register guidance.** The spec's inbound design deliberately pushes plain transcribed text to the FIFO (not a tagged prefix like the image protocol's `[image: path]`, which `prompts/system.md:72` instructs the model to parse) — so the model itself never learns a turn will be spoken back. Yet `prompts/system.md:185-187`'s ground rules currently say **"Bullet points over paragraphs"** and **"Simple hyphen bullets are fine"** — exactly the format TTS renders worst (no pause structure, bullets read as disconnected fragments). The spec doesn't touch `prompts/system.md` at all, so a voice-origin reply is composed under rules tuned for a text surface, with no seam to do otherwise.
 
 5. **No preflight/install-time verification of the new external dependencies**, unlike the project's established pattern. Per [[capabilities/installation]], `scripts/install.sh` already fails loud on a missing prerequisite (Telegram credentials, node/node_modules). The spec's Environment section requires a dedicated `~/.rachel/venvs/speech` Python 3.12 venv (host currently defaults to 3.13), `mlx-whisper`/`mlx-audio`/`misaki`, and a working `ffmpeg` — but explicitly punts verification to "first implementation step" with no mention of wiring a check into `install.sh`'s existing preflight/verification phases. A redeploy or fresh machine could silently lack voice support with no PASS/FAIL signal, unlike every other dependency the installer already guards.
 
 6. **The `execFile`-with-timeout precedent is only half-real.** The spec cites two prior patterns for `bridge/speech.ts`'s planned `execFile`-with-timeout, injectable-exec-function design: "`proactive/sweep.ts`'s existing execFile-with-timeout call" — confirmed accurate (`sweep.ts:8,48-62`, `defaultExecFn` passes `timeoutMs` straight to `execFile`'s `timeout` option) — and "`telegram-bridge.ts`'s `isPidAlive` check" — **not accurate**: `isPidAlive` (`bridge/telegram-bridge.ts:144-155`) shells out via synchronous `execSync` with no timeout at all. It's a real injectable seam (`isPidAliveFn`), just not an example of the timeout pattern the spec is citing it for. Low-stakes, but an implementer copying "the isPidAlive pattern" literally would drop the timeout the spec itself requires (30s/20s).
+
+   > **PARTLY VINDICATED 2026-07-22 (PR #55).** The timeout *was* implemented with the
+   > `execFile` pattern correctly. The defect was orthogonal to what this item warned about:
+   > the timeout was a **constant** while the cost it bounds scales with input length. A
+   > correctly-copied pattern with a wrong parameter. See
+   > [[sources/2026-07-22-pr55-voice-synthesis-timeout]].
 
 7. **New temp-file growth compounds a previously filed, still-open debt item.** [[capabilities/telegram-frontend]] already records: "Temp files in `~/.rachel/tmp/` are never cleaned up — the directory grows over time. No cleanup is scheduled" (from the PR #17 image-reception work). The voice spec adds at least one more inbound temp file per voice note (`.ogg`) plus at least one outbound intermediate (synthesized WAV before ffmpeg conversion, then the converted OGG) per voice-origin reply — multiplying the existing unbounded-growth debt without acknowledging or resolving it.
 

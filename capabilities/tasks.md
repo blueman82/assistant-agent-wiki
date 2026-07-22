@@ -35,6 +35,8 @@ Body text here.
 
 **Two frontmatter shapes.** The above covers Gary's own tasks. Loop-launcher task files (`tasks/launch-*.md` — see the Loop launcher section of `prompts/system.md`) use a separate shape instead: `title`, `slug`, `repo`, `permission_mode`, `status` (`launchable`/`launched`/`done`) — no `due`/`priority`. `tasks/EXAMPLE-task.md` (added PR #43, 2026-07-18, `chore/untrack-personal-tasks`) documents both shapes side by side and is the only genuine-task file left tracked in git.
 
+**Ad-hoc backgrounding variant (PR #56, 2026-07-22).** For a spontaneous request Rachel decides mid-conversation to background (see [[sources/2026-07-22-adhoc-background-escalation]] and [[capabilities/telegram-frontend]]'s turn-timeout section), she synthesises `tasks/adhoc-YYYY-MM-DD-<slug>.md` herself — the `adhoc-` prefix deliberately keeps these out of the `launch-*.md` glob, since nobody hand-authored them. Same loop-launcher frontmatter shape, plus one addition: a `report:` field pointing at `<absolute-home>/.rachel/loops/<slug>.report.md`. **That field is frontmatter-only and never reaches the spawned agent** — the launcher contract passes only the task file *body* to `claude -p`, so the literal report path also has to be spelled out again inside the body's constraints block, or the spawned process has nowhere to write its findings. This is a general constraint on the launcher contract, not specific to backgrounding: any future frontmatter field meant to steer the spawned agent's behaviour needs its value duplicated into the body.
+
 ## How to invoke
 
 - "What's on my task list?" → Rachel globs `tasks/` and reads each file

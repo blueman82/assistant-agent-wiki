@@ -25,6 +25,10 @@ Schema and workflows: see `AGENTS.md` in the project directory (`~/Github/assist
 - [[capabilities/installation]] — one-command installer: stamps + installs + verifies all four Rachel launchd services, config bootstrap-if-absent, truthful PASS/FAIL contract, launchd teardown-race handling (PRs #30-#32)
 - [[capabilities/memory]] — persistent file-based fact store at `~/.rachel/memory/`, deterministically injected into the system prompt every turn via `composeSystemPrompt`; write/recall/update-over-duplicate/delete-when-wrong/self-maintenance contract; 32 KiB size guard with UTF-8-safe truncation (PRs #49-#52)
 
+## Personal
+
+- [[personal/club-vitae-galway]] — Gary's Club Vitae gym membership (Oranmore, Galway), starts 2026-07-28: full class timetable, contact details, induction/training options
+
 ## Patterns
 
 - [[patterns/extending-system-md]] — how to evolve the brain without touching TypeScript

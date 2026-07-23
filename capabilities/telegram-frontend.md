@@ -2,7 +2,7 @@
 title: "Telegram Front-End"
 type: capability
 created: 2026-07-07
-last_updated: 2026-07-22
+last_updated: 2026-07-23
 sources: ["bridge/telegram-bridge.ts", "bridge/api.ts", "bridge/speech.ts", "bridge/launchd.plist", "bridge/notify.ts", "rachel.ts", "gate/surfaces/telegram.ts", "proactive/push.ts", "proactive/sweep.ts", "proactive/sessionPersist.ts", "prompts/system.md", "CLAUDE.md", "AGENTS.md"]
 tags: [capability, telegram, bridge, front-end, emit-channel, image-reception, pdf-ingestion, voice, stt, tts, self-monitoring, heartbeat, proactive, character-count, session-persistence, turn-timeout, backgrounding]
 ---
@@ -192,6 +192,16 @@ spawned agent, the send-gate hole a detached `claude -p` inherits, quiet-hours d
 loop-exit pings, pid-liveness verification, and the `nowFn()`-vs-`Date.now()` distinction this
 section's own logging depends on).
 
+## Log line timestamps (PR #60)
+
+Every `console.log`/`console.error` call the bridge makes about itself now carries an ISO-8601 timestamp prefix — `[2026-07-23T18:35:30.000Z] [telegram-bridge] ...`. Before PR #60 the log had no time information at all; `bridge/launchd.plist` redirects the process's raw stdout/stderr straight to `.rachel/telegram-bridge.log` with no timestamping at the launchd level either, so a reader had no way to place a log line in time except by inference from surrounding context.
+
+**Why it mattered enough to fix.** A same-day RCA session needed to determine whether a `SIGTERM` log entry was a *new* synthesis-timeout failure or the *already-fixed* PR #55 incident recurring. With no timestamps in the log, the only way to place the event in time was a side channel — the embedded reply-wav filename's `Date.now()` stamp (`reply-<ms>.wav`) — cross-referenced against the bridge process's own start time. That worked, but only because this particular failure happened to leave a timestamped artifact nearby; most log lines don't.
+
+**Implementation.** A `log(msg)`/`logError(msg)` helper pair inside `createBridge()`, closed over the same injected `nowFn` clock seam the heartbeat and health-state code already use (`options.nowFn ?? (() => new Date())`) — so the prefix respects the existing test-injection pattern rather than calling `new Date()` directly. All ~27 in-closure `console.*` call sites were converted to use the helpers; message content is unchanged, only the wrapper. The 3 call sites in the module-scope CLI guard (which runs once at process boot, before any `createBridge()` closure exists, so no `nowFn` is in scope) get a plain inline `new Date().toISOString()` instead — a real wall-clock read is correct there since that code path is never exercised under a fake clock.
+
+**Deliberately out of scope.** Only the bridge's own log lines. Embedded subprocess stderr — the synthesis/ffmpeg child output that gets folded into a thrown error message (see the PR #55 section above) — is passed through raw and unprefixed; multi-line captured stderr inside one log entry is still a trap for line-oriented reading (`awk`/`grep`/`head` on a fixed line number), just now with a timestamp on the entry's own start line. The other three launchd services (inbox-brief, proactive-sweep, proactive-calendar) were not touched.
+
 ## External liveness watch (PR #26) — the boundary is closed
 
 Self-monitoring above is the bridge watching itself — it cannot cover its own death. Since PR #26 the proactive sweep ([[capabilities/proactive-layer]], `com.rachel.proactive-sweep`, every 30 min) watches the bridge from outside and alerts through the same chokepoint:
@@ -232,3 +242,4 @@ Not part of this bridge — a separate, standalone sender for a different execut
 - [[sources/2026-07-21-cross-platform-persistent-memory]] — PRs #49-#52: memory store + bridge session persistence + the one-writer invariant fix
 - [[investigations/2026-07-21-rejected-shared-session-thread]] — why bridge session persistence stays narrowly scoped rather than becoming a shared thread
 - [[sources/2026-07-22-adhoc-background-escalation]] — PR #56: the turn-timeout ceiling this bridge enforces, duration logging, and the ad-hoc backgrounding escape hatch (spawning logic lives in `prompts/system.md`, not this bridge)
+- [[sources/2026-07-23-bridge-log-timestamps]] — PR #60: ISO-8601 timestamp prefixes on the bridge's own log lines, and the RCA that motivated it

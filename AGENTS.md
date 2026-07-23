@@ -25,6 +25,7 @@ here first, or the page belongs somewhere other than the wiki.
 | `investigations/` | Filed-back answers to queries: a question posed, alternatives weighed, a conclusion recorded |
 | `sources/` | Ingested references — docs, gists, PRs |
 | `templates/` | Page skeletons — copy, don't edit |
+| `personal/` | Gary's own personal-life reference facts (memberships, appointments, contacts) — not about Rachel's engineering, but durable facts Rachel should recall on request |
 
 `raw/` is not a page type. It holds immutable ingested input, never edited in
 place.

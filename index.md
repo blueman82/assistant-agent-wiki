@@ -42,6 +42,7 @@ Schema and workflows: see `AGENTS.md` in the project directory (`~/Github/assist
 
 ## Sources
 
+- [[sources/2026-07-23-pr59-bypass-permissions]] — PR #59: `permissionMode` flipped `auto`→`bypassPermissions`; the send gate still fires (PreToolUse hook denies bypass `canUseTool`, per SDK docs), but the mode was set without the documented-as-required `allowDangerouslySkipPermissions: true` — an open question, and no send-gate test was added
 - [[sources/karpathy-llm-wiki]] — the LLM wiki pattern this knowledge base is based on
 - [[sources/2026-06-29-wire-in-slack]] — wiring personal Slack into Rachel (replace-not-add decision)
 - [[sources/2026-07-08-telegram-reply-formatting]] — Telegram reply markdown-stripping fix and the parse_mode rejection rationale

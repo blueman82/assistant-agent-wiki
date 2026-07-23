@@ -2,8 +2,8 @@
 title: "Send Gate"
 type: capability
 created: 2026-07-07
-last_updated: 2026-07-21
-sources: ["rachel.ts", "gate/sendGate.ts", "gate/surfaces/telegram.ts", "gate/surfaces/queue.ts", "bridge/telegram-bridge.ts", "bridge/notify.ts", "proactive/push.ts", "prompts/system.md", "AGENTS.md"]
+last_updated: 2026-07-23
+sources: ["rachel.ts", "gate/sendGate.ts", "gate/surfaces/telegram.ts", "gate/surfaces/queue.ts", "bridge/telegram-bridge.ts", "bridge/notify.ts", "proactive/push.ts", "prompts/system.md", "AGENTS.md", "node_modules/@anthropic-ai/claude-agent-sdk/sdk.d.ts"]
 tags: [capability, gate, security, slack, calendar, telegram]
 ---
 
@@ -39,7 +39,7 @@ Gmail has no send tool (only `create_draft` + read/label/search) — nothing to 
 - **Accepted residual, not closed**: browser-automation sends (`mcp__claude-in-chrome__*` driving the Slack/Gmail web UI) aren't pattern-matchable and aren't gated. Detection is audit-log-only — a documented tradeoff, not an oversight.
 - **`bridge/notify.ts` and `proactive/push.ts` are deliberately ungated, by design not oversight** (see [[capabilities/inbox-brief]] and [[capabilities/proactive-layer]]). Both send only to the operator's own configured Telegram chat — no destination argument exists in either (`notify.ts` takes exactly one arg, a file path; the push CLI takes exactly five, none a chat id; both are test-pinned) — putting them in the same trust class as the bridge's own reply/alert messages and the approval surface's own sends, both already ungated; the gate's threat model is sends *to others* (Slack channels, Calendar invitees), not a notification to Gary himself. Both also read their message text from a file rather than argv, specifically so a swept email body containing a string like `api.telegram.org/.../sendMessage` can't land in the Bash `tool_use` command and trip the "Bash defense-in-depth" block above on Rachel's own legitimate call to the script.
 - **Slack tool-name confirmation is documentation-sourced, not live-introspected** for this gate's build — if Rachel's live Slack tool names ever drift from what's documented, `GATED_TOOL_NAMES` in `gate/sendGate.ts` silently stops matching. Closing this needs a startup-time live schema check or a future hook-probe run.
-- `permissionMode: "auto"` on Rachel's SDK session is a model-classifier mode, not a security boundary — the gate does not rely on it.
+- **`permissionMode` is not a security boundary — the gate does not rely on it.** As of PR #59 (2026-07-23) Rachel's SDK session runs `permissionMode: "bypassPermissions"` (was `"auto"`). The gate is unaffected: `bypassPermissions` acts on the `canUseTool` permission-check path, whereas a `PreToolUse` hook deny is a separate path the SDK honours regardless of mode (`sdk.d.ts:4128`: "PreToolUse hook denies bypass canUseTool"). The mode flip only changes which calls get auto-*allowed*, never whether the gate's *deny* is respected. Sourced from SDK type docs, not an empirical spike of this mode+hook combination — see [[sources/2026-07-23-pr59-bypass-permissions]]. That source also flags an open question: PR #59 set the mode without the documented-as-required `allowDangerouslySkipPermissions: true`, and its runtime consequence is unconfirmed.
 
 ## Relationships
 
@@ -49,3 +49,4 @@ Gmail has no send tool (only `create_draft` + read/label/search) — nothing to 
 - [[capabilities/proactive-layer]] — the `push.ts` chokepoint, the other deliberately-ungated own-chat sender
 - [[architecture/mcp-integrations]] — the tool surfaces the gate sits in front of
 - [[patterns/extending-system-md]] — the prompt-level draft-first contract this gate enforces mechanically
+- [[sources/2026-07-23-pr59-bypass-permissions]] — the `permissionMode` flip to `bypassPermissions` and why the gate still fires under it

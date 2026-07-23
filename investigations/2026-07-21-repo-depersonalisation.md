@@ -138,4 +138,4 @@ those jobs and find their task files missing. Not reconciled — the owner's
 position is that this repo is single-machine, so the fresh-clone path is not a
 supported scenario.
 
-See [[installation]], [[tasks]].
+See [[capabilities/installation]], [[capabilities/tasks]].

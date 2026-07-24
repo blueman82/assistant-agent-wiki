@@ -326,3 +326,28 @@ PR #65 (`feat/memory-write-lock`) merged (`4d4ea4a`) shortly after the previous 
 **Four pages corrected**, all from "OPEN/unmerged/not-yet-merged" language to "merged": `sources/2026-07-24-memory-hardening-cluster.md` (status table, PR #65 section header, the "known gap" paragraph — now cites the actual merged `prompts/system.md` wording confirming the prompt-only lock-routing contract rather than speculating what the merge "will" say, and the durable-lessons test-count sequence extended 520/520 → 546/546), `capabilities/memory.md` (added locked-append as a third enforcement layer alongside the write-gate and lint — the previous entry's new section only named two layers, omitting #65 entirely since it was unmerged at the time; also `sources` frontmatter), and `index.md` (both the memory capability bullet and the source-page list line).
 
 No change needed to `capabilities/send-gate.md` or `capabilities/proactive-layer.md` — their one-line reciprocal links didn't reference #65's merge state.
+
+## [2026-07-24] lint | Memory-hardening cluster + full vault — clean, 0 findings
+
+Focused check on the cluster (`sources/2026-07-24-memory-hardening-cluster.md`, `capabilities/memory.md`, `index.md`, `log.md`, plus cross-linked `capabilities/send-gate.md`, `capabilities/proactive-layer.md`, `sources/2026-07-21-cross-platform-persistent-memory.md`) after the prior correction entry fixed all "OPEN/unmerged" PR #65 language to "merged."
+
+**Stale PR #65 language**: none found on any live page. `grep -rniE` for open/unmerged/pending/awaiting near `#65` across the vault returns matches only inside `log.md` itself — both from the superseded ingest entry (which was accurate when written, before the correction entry) and the correction entry's own description of what it fixed. `log.md` is append-only history per `AGENTS.md`'s convention (same pattern as the 2026-07-14 entry correcting a stale PR #20 status) — not a live-page defect.
+
+**Cross-page consistency**: `capabilities/memory.md`, `sources/2026-07-24-memory-hardening-cluster.md`, `index.md` (both the memory capability bullet and the source-page list entry), `capabilities/send-gate.md`, and `capabilities/proactive-layer.md` all describe PR #65 as merged, cite the same `4d4ea4a` merge commit, and the same 546/546 test count. No contradictions found.
+
+**Known-unclosed-gaps framing**: verified identical between `capabilities/memory.md`'s "Known, explicitly unclosed gaps" paragraph and the source page's "Known limitation" + "Known gap" sections — both name the same two gaps (mcp-exec reachability via the unset SDK `tools` option; the prompt-only, not code-enforced, lock-routing contract) with matching detail and the same "do not read as sealed" caution.
+
+**Broken wikilinks**: 0, full vault (scripted scan across all typed pages, excluding `.obsidian/`/`templates/`/`inbox/`/`log.md`).
+
+**Orphan pages**: 0 among actual wiki page types. Two false positives excluded: `.remember/now.md` and `.remember/today-2026-06-29.md` are a separate Claude Code plugin's own state files that happen to sit inside the vault directory — `capabilities/memory.md` explicitly documents `.remember/` as "not Rachel's, never read or write it," so these were never wiki pages to begin with, not orphans of one.
+
+**Stale pages**: 0 at the vault's 90-day threshold. Oldest is `sources/karpathy-llm-wiki.md` at 47 days, already dispositioned by a prior lint as needing no action (fixed external reference, doesn't cover active code). All five cluster-focus pages carry `last_updated: 2026-07-24`.
+
+**Missing cross-reference found, not fixed**: `capabilities/inbox-brief.md` is the concrete trigger for the memory-write lockout (`RACHEL_UNTRUSTED_CONTENT`, set only in its launchd plist) — both `capabilities/memory.md` and the source page link *to* `capabilities/inbox-brief` on this basis, but `capabilities/inbox-brief.md` itself has zero mention of `RACHEL_UNTRUSTED_CONTENT` or the memory gate, and no reciprocal link. Flagged for the next ingest/edit pass touching that page, not corrected here (out of this lint's declared cluster scope, and a one-line addition to a page last touched 2026-07-15 warranted a deliberate edit rather than a drive-by).
+
+**Inbox backlog**: `raw/task_to_do.md` (mtime 2026-07-20) is un-triaged — no corresponding file exists in `assistant-agent/tasks/`. Per `AGENTS.md`'s Step 0 ingest rule this is backlog/TODO content (imperative asks, no durable facts), not wiki reference material, and should have been split into `tasks/*.md` items rather than left in `raw/`. A prior lint (2026-07-21) recorded it as "already triaged" — that was true of a different, now-superseded raw file at the time; this current `task_to_do.md` predates the cluster and was not addressed by it. Flagged, not actioned (ingest's job, not lint's, per this skill's Step 7 pairing note — and out of the cluster's declared scope regardless).
+
+**Data gaps**: none found specific to the memory-hardening cluster beyond the inbox-brief cross-reference above.
+
+No page edits made this pass — the prior correction commit (`2e898c4`) had already resolved every stale-status finding this lint would otherwise have raised.
+<!-- lint-findings: 2 -->

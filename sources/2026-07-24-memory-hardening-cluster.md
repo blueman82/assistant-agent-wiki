@@ -11,16 +11,16 @@ tags: [memory, security, concurrency, write-gate, lint, symlink, path-traversal,
 
 An audit found Rachel's memory contract ([[capabilities/memory]], `prompts/system.md`'s `## Memory` section) was enforced by **nothing in code**. Empirical proof (verified): the first-ever fact file, `~/.rachel/memory/units-preference.md`, has no frontmatter at all — pure prompt-only compliance had already failed in the wild — and a second violating file appeared **during this loop**. Gary's steer: "prompt-only enforcement doesn't work as it outlines so that means a hook is the best offence/defense." That line is the design thesis for the whole cluster: move enforcement from prose the model might follow to code that runs regardless.
 
-## Status as of 2026-07-24 (verified via `gh pr view` + `git merge-base --is-ancestor`)
+## Status as of 2026-07-24 (verified via `gh pr view` + `git log`; superseding an earlier draft of this page written mid-loop when #65 was still open)
 
 | PR | Title | State | On `main`? |
 |----|-------|-------|-----------|
 | #62 | memory index tail keep | MERGED (`0ee4c28`) | yes |
 | #63 | periodic memory store lint | MERGED (`302dc93`) | yes |
-| #64 | memory write gate | MERGED (`bc708f7`, current `main` HEAD) | yes |
-| #65 | memory write lock | **OPEN** | **no** — branch `feat/memory-write-lock`, tip `1c09054` |
+| #64 | memory write gate | MERGED (`bc708f7`) | yes |
+| #65 | memory write lock | MERGED (`4d4ea4a`, merge commit; branch tip `1c09054`) | yes, current `main` HEAD |
 
-This is **not** a completed 4-PR cluster. Three of four are live; #65 is implemented and its own tests pass, but it has not merged and none of its guarantees are active on any deployed surface yet. Anything below describing `memoryLock.ts`/`memoryAppend.ts` describes code that exists on a branch, not shipped behaviour — flagged inline, not just here. 521 tests pass on `main` (PRs #62-#64 included); that count does **not** include #65's tests, which run only on its branch.
+All four PRs are merged. `npm test` re-run against merged `main` this session: **546 tests, 546 pass, 0 fail.** Everything below describing `memoryLock.ts`/`memoryAppend.ts` is shipped behaviour, not branch-only code.
 
 ## PR #62 — truncation direction fix (`0ee4c28`, merged)
 
@@ -64,9 +64,7 @@ The theme across all three rounds: **the gap between what a guard inspects (a st
 
 `rachel.ts:219` sets `permissionMode: "bypassPermissions"`; `rachel.ts:222` sets `allowedTools` (via `resolveAllowedTools`) but the SDK's separate `tools` option is never set anywhere in the file. `mcp__mcp-exec__execute_code_with_wrappers` — arbitrary code execution — therefore remains reachable in the untrusted one-shot, and **no tool-name-based `PreToolUse` gate can cover it**, because the hook only inspects `Write`/`Edit`/`Bash` tool calls by name; a hostile email could in principle drive memory-store mutation through `mcp-exec` entirely outside the three patterns this hook matches. This is pre-existing and out of scope for PRs #62-#65. PR #64 narrows the injection surface substantially (the ordinary Write/Edit/Bash paths a model would reach for first); **it does not close it.** Do not read this page, or [[capabilities/memory]], as though the hole is sealed.
 
-## PR #65 — concurrency (`1c09054`, **OPEN, unmerged**, branch `feat/memory-write-lock`)
-
-Not yet on `main`. Described here for completeness of the cluster's design, with every claim scoped to "exists on the branch."
+## PR #65 — concurrency (`1c09054`, merged into `4d4ea4a`)
 
 New `proactive/memoryLock.ts` — an `O_EXCL` lockfile mutex (`openSync(path, "wx")`, atomically fails if the file exists) — plus `proactive/memoryAppend.ts`, a CLI (`memoryAppend.ts <title> <file> <hook>`) that performs a locked read-modify-write append of one pointer line to `MEMORY.md`.
 
@@ -74,17 +72,17 @@ New `proactive/memoryLock.ts` — an `O_EXCL` lockfile mutex (`openSync(path, "w
 
 **Staleness handling**: a lock is stale (safe to break) if the holder's pid is no longer alive (`kill -0` probe, same idiom as the bridge's `isPidAlive`) OR the lock is older than `staleMs` regardless of pid liveness — a live-but-wedged holder would otherwise block the store forever. `withMemoryLock` polls at `pollMs` until `timeoutMs`, then throws loud rather than proceeding unlocked — a lost pointer line is a permanently destroyed memory, not a safe-direction loss like `push.ts`'s budget counter.
 
-**Three review findings, all fixed on the branch** (the loop's own recurring pattern: green tests, then a real gap found only in review):
+**Three review findings, all fixed before merge** (the loop's own recurring pattern: green tests, then a real gap found only in review):
 
 1. **Critical — injection.** The CLI initially interpolated `title`/`file`/`hook` args directly into the fixed-format pointer line (`- [Title](file.md) — hook`). A newline in `title` would write a second, independent line that parses as a legitimate-looking pointer to an arbitrary file — the write-side twin of PR #63's bracketed-title parser risk. `validatePointerArgs` (exported, pure) now rejects `\n`, `\r`, and `[ ] ( )` in `title`/`hook`, and enforces `file` as a bare `*.md` filename with no path separators (closing directory traversal) and none of those characters either.
 2. **Critical — first-run hang.** On a fresh install with no `~/.rachel/memory/` directory yet, `mkdirSync` originally ran **inside** the locked callback — but the lockfile itself (`<path>.lock`) lives in that same missing directory, so `acquireMemoryLock`'s `openSync` failed with `ENOENT` before the callback ever ran. The very first memory write on a fresh install busy-polled the full 10s timeout, then failed with a misleading "lock timed out" that hid the real cause. Fixed: `mkdirSync(dirname(path), { recursive: true })` now runs **before** lock acquisition.
 3. **Misclassified contention.** A permissions failure during stale-lock reclaim (`EACCES` on the `rmSync` that breaks a stale lock) was being swallowed the same way a normal stale-break `ENOENT` is, which then let the retry `openSync` observe `EEXIST` and busy-poll to a misleading "timed out" message — masking a real permissions problem as ordinary contention. Fixed by rethrowing any non-`ENOENT` errno rather than swallowing it, matching the "only the expected condition is silent" idiom already used in `memoryIndex.ts` and (independently, same session) `gate/memoryGate.ts`'s `resolveReal`.
 
-**Known gap, stated in the branch's own code comments — not yet closed even once #65 merges**: `memoryAppend.ts`'s header states plainly that routing index writes through this CLI is a **prompt contract, not a code-enforced one**. `prompts/system.md` will instruct Rachel to invoke the CLI instead of a freehand `Write` to `MEMORY.md`, but nothing stops a freehand `Write` from bypassing the lock entirely — same trust class as the ad-hoc-backgrounding constraints block elsewhere in this repo. The branch's own comment names PR #64's write-gate hook as "a plausible future place to enforce this in code (block a raw Write to MEMORY.md, require this CLI instead) — not built here since that PR is a sibling, not a dependency." So even after #65 lands, **two unsealed doors remain**: the mcp-exec gap noted under PR #64, and this prompt-only lock-routing contract.
+**Known gap, stated in the code's own comments and confirmed in the merged `prompts/system.md` wording** (verified: `git show bc708f7..4d4ea4a -- prompts/system.md`): routing index writes through this CLI is a **prompt contract, not a code-enforced one** — `prompts/system.md` now reads "This routing is a prompt contract, not code-enforced: nothing stops a freehand Write from bypassing the lock entirely, so follow it because it's the documented behaviour, not because anything blocks the alternative." Same trust class as the ad-hoc-backgrounding constraints block elsewhere in this repo. A code comment names PR #64's write-gate hook as "a plausible future place to enforce this in code (block a raw Write to MEMORY.md, require this CLI instead) — not built here since that PR is a sibling, not a dependency." So even with all four PRs merged, **two unsealed doors remain**: the mcp-exec gap noted under PR #64, and this prompt-only lock-routing contract.
 
 ## Durable lessons (not changelog — apply beyond this cluster)
 
-1. **A green suite is evidence about what was tested, never about what was safe.** Three separate times in this cluster a fully green suite (the run counts moved 21/21 → 511/511 → 520/520 as PRs landed) coexisted with a real, live defect, because nobody had yet written a test for that specific shape — the case is *findable in review*, not *automatically caught*.
+1. **A green suite is evidence about what was tested, never about what was safe.** Three separate times in this cluster a fully green suite (the run counts moved 21/21 → 511/511 → 520/520 → 546/546 as PRs landed) coexisted with a real, live defect, because nobody had yet written a test for that specific shape — the case is *findable in review*, not *automatically caught*.
 2. **Two-layer enforcement, deliberately divided, on purpose — neither layer alone is sufficient.** PR #64's hook blocks at write time; PR #63's sweep lint detects periodically. The hook can't see `Edit` results that land via a route it doesn't watch, obfuscated `Bash`, manual edits to the filesystem, or a detached `claude -p` spawn (which loads **no hooks at all** — see [[capabilities/send-gate]]'s own "no PreToolUse hook in a detached spawn" note). The sweep leaves up to a 30-minute detection window. Each covers the other's blind spot; this is presented in the code comments as an intentional split, not a compromise.
 3. **The gap between what a guard inspects and what the OS actually does is where path vulnerabilities live.** Every one of PR #64's three bypass rounds was a string-level check disagreeing with filesystem-level resolution (case-folding, lexical-vs-symlink resolution, swallowed errno hiding a real resolution failure). This generalises past this cluster: any security check phrased as a string comparison on a path is a candidate for the same class of bug.
 4. **A known limitation, recorded honestly rather than left implicit**: see the PR #64 and PR #65 sections above for the two specific unsealed doors (`mcp-exec`, prompt-only lock routing). Both are pre-existing/deliberately-deferred, not silently missed — but the wiki must not read as though the hole is sealed just because a hardening PR landed nearby.

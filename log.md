@@ -316,3 +316,13 @@ New source page `sources/2026-07-24-memory-hardening-cluster.md`. Origin: prompt
 **Small reciprocal links added**, not restructured: `capabilities/send-gate.md` and `capabilities/proactive-layer.md` each gained one line pointing at the new page (sibling `PreToolUse` hook; new `memory-lint` sweep family) — both pages already had `last_updated: 2026-07-24` from today's earlier lint pass, so no bump needed.
 
 `index.md` updated: the memory capability bullet and the memory source-page list both now name the hardening cluster and its merge/open split.
+
+## [2026-07-24] correction | PR #65 merged after the above entry was written — status updated across 4 pages
+
+PR #65 (`feat/memory-write-lock`) merged (`4d4ea4a`) shortly after the previous entry recorded it as OPEN — the previous entry's "OPEN, not merged" status was accurate when written and is now stale, superseded by this correction rather than edited in place. Re-verified this session via `gh pr view 65` (`state: MERGED`, `mergeCommit: 4d4ea4a`) and `git log` on the code repo directly.
+
+**Re-run test suite on merged `main`**: 546 tests, 546 pass, 0 fail (`npm test`, this session) — supersedes the previous entry's 521-passing figure, which predated #65.
+
+**Four pages corrected**, all from "OPEN/unmerged/not-yet-merged" language to "merged": `sources/2026-07-24-memory-hardening-cluster.md` (status table, PR #65 section header, the "known gap" paragraph — now cites the actual merged `prompts/system.md` wording confirming the prompt-only lock-routing contract rather than speculating what the merge "will" say, and the durable-lessons test-count sequence extended 520/520 → 546/546), `capabilities/memory.md` (added locked-append as a third enforcement layer alongside the write-gate and lint — the previous entry's new section only named two layers, omitting #65 entirely since it was unmerged at the time; also `sources` frontmatter), and `index.md` (both the memory capability bullet and the source-page list line).
+
+No change needed to `capabilities/send-gate.md` or `capabilities/proactive-layer.md` — their one-line reciprocal links didn't reference #65's merge state.

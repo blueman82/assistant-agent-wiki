@@ -3,7 +3,7 @@ title: "Memory"
 type: capability
 created: 2026-07-21
 last_updated: 2026-07-24
-sources: ["prompts/system.md", "proactive/memoryIndex.ts", "proactive/memoryIndex.test.ts", "proactive/memoryLint.ts", "gate/memoryGate.ts", "rachel.ts"]
+sources: ["prompts/system.md", "proactive/memoryIndex.ts", "proactive/memoryIndex.test.ts", "proactive/memoryLint.ts", "gate/memoryGate.ts", "rachel.ts", "proactive/memoryLock.ts", "proactive/memoryAppend.ts"]
 tags: [capability, memory, persistence, deterministic-injection, cross-platform, write-gate, lint]
 ---
 
@@ -47,14 +47,15 @@ Recall is not left to the model noticing the file exists — `composeSystemPromp
 
 **UTF-8-safe truncation.** A raw byte cut at the boundary can land mid-character (the operator's writing uses em dashes and accented names), which would otherwise produce a `U+FFFD` replacement character in the truncated tail. Because the kept slice is now the tail, the cut point advances **forward** over UTF-8 continuation bytes (`(byte & 0xc0) === 0x80`) until it lands on a character boundary — the opposite direction from a head-keep's backward scan, not a mirror of it.
 
-## Write-time enforcement (`gate/memoryGate.ts`, PR #64) and periodic detection (`proactive/memoryLint.ts`, PR #63)
+## Write-time enforcement (`gate/memoryGate.ts`, PR #64), periodic detection (`proactive/memoryLint.ts`, PR #63), and locked appends (`proactive/memoryLock.ts` + `proactive/memoryAppend.ts`, PR #65)
 
-The write/recall contract above was, until PRs #62-#65, enforced by nothing but the prompt — verified empirically: the first-ever memory file had no frontmatter at all. Two code layers now back it, deliberately divided so each covers the other's blind spot:
+The write/recall contract above was, until PRs #62-#65, enforced by nothing but the prompt — verified empirically: the first-ever memory file had no frontmatter at all. Three code layers now back it (all merged, `main` HEAD `4d4ea4a`), deliberately divided so each covers a different gap:
 
 - **Write-time gate**: a third `PreToolUse` hook in `rachel.ts` (alongside [[capabilities/send-gate]]'s hook) denies a `Write` inside the memory dir whose frontmatter fails validation (missing `name`/`description`/`type`, invalid `type`, or a `name`≠filename-slug mismatch), and denies *any* memory-dir `Write`/`Edit`/`Bash` outright when `RACHEL_UNTRUSTED_CONTENT` is set (currently only in `tasks/inbox-brief-launchd.plist`, since that one-shot processes hostile email while holding `Write`).
 - **Periodic lint**: the same schema validator (`validateFrontmatter`, shared — one implementation, two callers) runs as a 6th family in the 30-minute proactive sweep, catching anything the hook doesn't see: `Edit` results, obfuscated `Bash`, manual filesystem edits, or a detached `claude -p` spawn (which loads no hooks at all).
+- **Locked appends**: `MEMORY.md` is read-modify-write across the terminal, the Telegram bridge, and headless one-shots concurrently; the repo's usual atomic temp-file+rename idiom gives durability but not mutual exclusion, so two near-simultaneous appends could silently drop one pointer line. `proactive/memoryAppend.ts` (invoked as `npx tsx proactive/memoryAppend.ts "<title>" "<file>" "<hook>"`, per `prompts/system.md`) wraps the append in an `O_EXCL` lockfile mutex (`proactive/memoryLock.ts`) and rejects (never sanitises) a title/file/hook containing a newline, carriage return, or `[ ] ( )` that could corrupt or forge a pointer line.
 
-**Known, explicitly unclosed gaps** — do not read this capability as fully locked down: (1) `rachel.ts` runs `permissionMode: "bypassPermissions"` and sets `allowedTools` but never the SDK's `tools` option, so `mcp__mcp-exec__execute_code_with_wrappers` remains reachable in the untrusted one-shot and no tool-name-based hook can cover it; (2) a planned locked-append CLI (PR #65, **not yet merged** as of 2026-07-24) would still only be a *prompt* contract for routing writes through it — a freehand `Write` to `MEMORY.md` bypasses the lock regardless. Full detail, including the three security-fix rounds that found the write-gate's path-resolution bypasses one at a time: [[sources/2026-07-24-memory-hardening-cluster]].
+**Known, explicitly unclosed gaps** — do not read this capability as fully locked down even with all four PRs merged: (1) `rachel.ts` runs `permissionMode: "bypassPermissions"` and sets `allowedTools` but never the SDK's `tools` option, so `mcp__mcp-exec__execute_code_with_wrappers` remains reachable in the untrusted one-shot and no tool-name-based hook can cover it; (2) routing writes through the locked-append CLI is a **prompt contract, not code-enforced** — `prompts/system.md` says so explicitly — so a freehand `Write` to `MEMORY.md` still bypasses the lock entirely. Full detail, including the three security-fix rounds that found the write-gate's path-resolution bypasses one at a time: [[sources/2026-07-24-memory-hardening-cluster]].
 
 ## Design note — why this is not session persistence
 
@@ -63,7 +64,7 @@ Memory and Telegram session continuity ([[capabilities/telegram-frontend]]'s bri
 ## Relationships
 
 - [[sources/2026-07-21-cross-platform-persistent-memory]] — the PR cluster (#49, #50) that built this
-- [[sources/2026-07-24-memory-hardening-cluster]] — PRs #62-#65: truncation direction fix, periodic lint, write-time gate, write lock (unmerged)
+- [[sources/2026-07-24-memory-hardening-cluster]] — PRs #62-#65 (all merged): truncation direction fix, periodic lint, write-time gate, locked-append write lock
 - [[investigations/2026-07-21-rejected-shared-session-thread]] — why this is separate from session persistence
 - [[architecture/overview]] — where `composeSystemPrompt` sits in the turn-construction pipeline
 - [[capabilities/tasks]] — the other store; time-bound action items go there, not here

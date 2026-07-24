@@ -418,3 +418,22 @@ Ran the standard mechanical sweep (orphans, broken wikilinks, `⚠️ CONTRADICT
 
 **No third finding.** Vault is structurally clean and both standing items are now either closed or actively delegated — nothing left in limbo.
 <!-- lint-findings: 2 -->
+
+## [2026-07-24] lint | Four PRs shipped after last ingest checkpoint (items in RCA fix list now closed)
+
+Re-verified vault against four un-ingested assistant-agent PRs merged since the previous wiki ingest (PR #68, 2026-07-24 01:07). All four required in-place corrections of now-false claims.
+
+**PR #76 (feat/wake-channel-consumer, merged 2026-07-24 10:57).** The spec [[sources/2026-07-24-streaming-relay-wake-channel]] stated "NOT built (0 of 3 PRs landed)". PR #76 ships the file-drop wake consumer that lets detached jobs start Rachel turns. Updated page title, intro banner, and index.md to reflect partial ship. The streaming ticker (Decision A/B/C/D in the spec) remains unbuilt; this landed only the consumer.
+
+**PR #71 (feat/rachel-tmp-sweep, merged 2026-07-24 09:54).** RCA fix-list item 16 ("~/.rachel/tmp sweep") was decided but unbuilt; PR #71 ships it. The 30-min proactive tick removes files 6+ hours old with symlink/directory guards. Corrected the "known debt" paragraph on [[capabilities/telegram-frontend]] (temp-cleanup now live), updated [[investigations/2026-07-18-telegram-voice-stt-tts-spec-gaps]] (item 7 now resolved).
+
+**PR #70 (fix/bashpatterns-send-coverage, merged 2026-07-24 09:24).** RCA fix-list item 14 ("bashPatterns.ts coverage") named five escape holes in the original implementation; PR #70 closes all of them. The five patterns now caught: `curl --data`, short `-d` flag, Telegram `sendVoice`/`sendDocument`, Slack `chat.update`/`chat.delete`, Gmail `drafts/send`. Updated [[capabilities/send-gate]] to mark the layer complete + mutation-test summary table (added by concurrent work). Updated [[sources/2026-07-23-rejection-rca-and-fix-list]] (item 14 now closed).
+
+**PR #69 (fix/voice-pipeline-hf-offline, merged 2026-07-24 03:17).** RCA finding 3 identified HuggingFace Hub stalls; PR #69 closes the voice-pipeline subset. Items 1-3 (HF_HUB_OFFLINE environment variable + model pre-fetch) are now shipped; item 4 (transcribe budget 30s → 2 minutes) remains decided but unbuilt. Updated [[investigations/2026-07-18-telegram-voice-stt-tts-spec-gaps]] (items 1-3 resolved). Updated [[sources/2026-07-23-rejection-rca-and-fix-list]] (voice pipeline 1-3 closed).
+
+**Concurrent ingest work added new pages** (`architecture/voice-pipeline.md`, `sources/2026-07-24-rca-telebot-hardening.md`) — included in this commit but authored by separate ingest session.
+
+**Vault structural state: clean.** 0 orphans, 0 broken wikilinks, 0 stale pages, 0 contradiction flags. All four PRs were in-place claim corrections, not new documentation.
+
+**Finding count: 4** (four stale claim corrections, all fixed).
+<!-- lint-findings: 4 -->

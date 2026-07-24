@@ -3,6 +3,7 @@ title: "RCA 2026-07-23 — Ghost Tool Rejections, No Report-Back, HF Hub Stalls"
 type: source
 created: 2026-07-24
 last_updated: 2026-07-24
+update_note: "2026-07-24 lint: items 1-3 (voice), 14 (bashPatterns), 16 (tmp sweep), 17 (wake consumer) shipped in PRs #69-71, #76"
 sources: ["docs/coderails/specs/rca-2026-07-23-fix-list.md", "bridge/telegram-bridge.ts", "bridge/speech.ts", "scripts/speech/transcribe.py", "rachel.ts", "prompts/system.md", ".rachel/telegram-bridge.log"]
 tags: [rca, investigation, telegram, bridge, turn-timeout, permissions, bypass-permissions, voice, stt, huggingface, deploy-discipline, wake-channel]
 ---
@@ -143,35 +144,37 @@ items 10, 11 and 17 by these numbers.
 - **UserPromptSubmit discards** — Gary raised the hook timeout 5s → 10s.
 - **Turn-lifecycle rule** — written to Rachel's own memory store.
 - **PR #61** (speech.ts docs) — merged.
+- **Voice pipeline (finding 3, items 1-3)** — PR #69 (`fix/voice-pipeline-hf-offline`, merged 2026-07-24) sets `HF_HUB_OFFLINE=1` for both `transcribe()` and `synthesize()`, and pre-fetches models in `scripts/speech/setup.sh`. **Item 4** (transcribe budget → 2 minutes) remains decided but unbuilt.
+- **Bash send patterns (item 14)** — PR #70 (`fix/bashpatterns-send-coverage`, merged 2026-07-24) closed the coverage gaps: `curl --data` POSTs, Telegram `sendVoice`/`sendDocument`, Slack `chat.update`/`chat.delete`, Gmail `drafts.send`.
+- **Temp file cleanup (item 16)** — PR #71 (`feat/rachel-tmp-sweep`, merged 2026-07-24) removed the 750-file backlog and installs a 30-min proactive tick to sweep files 6+ hours old.
 
-### Specced and approved, not built
+### Specced and approved — partially built
 
-Items **10, 11, 17** — the whole of [[sources/2026-07-24-streaming-relay-wake-channel]]. Three PRs
-and a live drill remain.
+Items **10, 11, 17** define [[sources/2026-07-24-streaming-relay-wake-channel]]. PR #76
+(`feat/wake-channel-consumer`, merged 2026-07-24) shipped the file-drop wake consumer (item 17).
+Items 10 and 11 remain unbuilt.
 
 - **10. Mid-turn progress relay** (Gary's own addition). His complaint verbatim: replies take so
   long because Rachel waits until text generation is done, forcing him to read reams of text with
   no sense of progress. He asked for stream events relayed to the human, mindful of Telegram API
-  limits, with jitter/backoff. → Spec Part A.
+  limits, with jitter/backoff. → Spec Part A. **Not built.**
 - **11. Stale-process family (auto-remediating).** Compare bridge process start time against the
   newest relevant commit on main. **Per Gary's explicit instruction this must not ask for
   approval**: fix it — restart the bridge (bootout → poll-until-gone → bootstrap) — then tell him
-  it was done. → Spec Part B, producer 2.
-- **17. Completion→wake channel** — the real "Rachel comes back to you" capability, and the answer
-  to finding 2. → Spec Part B.
+  it was done. → Spec Part B, producer 2. **Not built.**
+- **17. Completion→wake channel — PARTIALLY BUILT (PR #76).** The file-drop wake consumer is live.
+  The mechanical ticker (Decisions A/B/C/D in the spec) and live drill remain. This is the core
+  capability closing finding 2 ("Rachel structurally cannot report back later").
 
 ### Decided but not built
 
 Real decisions with no implementation yet. **Nothing below describes current behaviour.**
 
 **A. Voice pipeline** (all from finding 3)
-1. `HF_HUB_OFFLINE=1` in `transcribe()`'s child env (`bridge/speech.ts:84`). Tiny.
-2. Same for `synthesize()` — it performs its own hub check (`Fetching 56 files` observed). Tiny.
-3. `scripts/speech/setup.sh` pre-fetches and verifies both models so offline mode can never hit a
-   cold cache. Small. *(Alternative to 1–3: pass a local snapshot path instead of the HF repo ref —
-   pick one approach, not both.)*
-4. **Transcribe budget 30s → 2 minutes.** Gary's decision, explicitly overruling the RCA's original
-   "no change" recommendation: a human may legitimately send a longer voice note.
+1. `HF_HUB_OFFLINE=1` in `transcribe()`'s child env — **CLOSED (PR #69, 2026-07-24).** Stops the Hub freshness check stall. The env var is now set when executing the transcribe command.
+2. Same for `synthesize()` — **CLOSED (PR #69).** Both the transcribe and synthesize paths now set `HF_HUB_OFFLINE`.
+3. `scripts/speech/setup.sh` pre-fetches and verifies both models — **CLOSED (PR #69).** Both models are cached before offline mode is relied upon, eliminating cold-cache hits.
+4. **Transcribe budget 30s → 2 minutes — decided but unbuilt.** Gary's decision, explicitly overruling the RCA's original "no change" recommendation: a human may legitimately send a longer voice note. No implementation yet.
 
 **B. Ghost-rejection hardening** (all from finding 1)
 
@@ -193,19 +196,13 @@ Real decisions with no implementation yet. **Nothing below describes current beh
     5). Fold a deny branch into `destructive_bash_gate.sh`, which already has the correct
     JSON-decision plumbing. **Decided: yes.** Tiny.
 13. **Hooks in Rachel's environment — decided: bless them.** No change.
-14. **`bashPatterns.ts` coverage** — this is the *only* send enforcement left in bridge turns under
-    `bypassPermissions`. Known holes: `curl --data` POSTs without `-X POST` evade the calendar
-    detector; Telegram `sendVoice`/`sendDocument`, Slack `chat.update`/`chat.delete`, and Gmail
-    `drafts.send` are absent entirely. Medium, with tests. See [[capabilities/send-gate]].
+14. **`bashPatterns.ts` coverage — CLOSED (PR #70, 2026-07-24).** This is the sole send enforcement left under `bypassPermissions`. Known holes (`curl --data` POSTs, Telegram `sendVoice`/`sendDocument`, Slack `chat.update`/`chat.delete`, Gmail `drafts.send`) are now pattern-matched and denied. See [[capabilities/send-gate]].
 15. **Agent-tool policy under bypass — decided: allow for now.** Gary may later return to auto mode
     with a defined approval-toolset list.
 
 **E. Hygiene**
 
-16. **`~/.rachel/tmp` sweep** — 750 voice artifacts, plus the PR #17 image-leak debt already tracked
-    on [[capabilities/telegram-frontend]]. The bridge's own voice cleanup is *correct*; the debris
-    comes from direct test invocations and mid-synthesis kills, so a startup or daily sweep is the
-    robust fix rather than more `finally` blocks. **Decided: agreed.** Small.
+16. **`~/.rachel/tmp` sweep — CLOSED (PR #71, 2026-07-24).** Removed the 750-file backlog (voice artifacts + image-reception debris). The bridge's own cleanup was correct; the backlog came from test runs and mid-synthesis kills. The 30-min proactive tick now removes files 6+ hours old with symlink and directory guards.
 18. **Ops one-off — triaged, closed.** Stray `claude --dangerously-skip-permissions` processes were
     all interactive terminal sessions under `-zsh` on TTYs (coderails and assistant-agent
     worktrees), not dead Rachel jobs or runaway routines.

@@ -3,6 +3,7 @@ title: "Telegram voice in/out (STT+TTS) spec — architecture cross-refs and une
 type: investigation
 created: 2026-07-18
 last_updated: 2026-07-24
+lint_note: "2026-07-24: item 7 temp-cleanup resolved by PR #71; items 1-3 voice-pipeline resolved by PR #69"
 sources: ["assistant-agent PR #55", "docs/coderails/specs/telegram-voice-stt-tts.md", "bridge/telegram-bridge.ts", "bridge/api.ts", "proactive/sweep.ts", "prompts/system.md", "scripts/install.sh", "capabilities/telegram-frontend.md", "capabilities/installation.md"]
 tags: [investigation, telegram, voice, stt, tts, bridge, spec-review]
 ---
@@ -55,14 +56,7 @@ Gary asked for a wiki cross-check of `docs/coderails/specs/telegram-voice-stt-tt
    > correctly-copied pattern with a wrong parameter. See
    > [[sources/2026-07-22-pr55-voice-synthesis-timeout]].
 
-7. **New temp-file growth compounds a previously filed, still-open debt item.** [[capabilities/telegram-frontend]] already records: "Temp files in `~/.rachel/tmp/` are never cleaned up — the directory grows over time. No cleanup is scheduled" (from the PR #17 image-reception work). The voice spec adds at least one more inbound temp file per voice note (`.ogg`) plus at least one outbound intermediate (synthesized WAV before ffmpeg conversion, then the converted OGG) per voice-origin reply — multiplying the existing unbounded-growth debt without acknowledging or resolving it.
-
-   > **QUANTIFIED AND RE-DIAGNOSED 2026-07-23.** [[sources/2026-07-23-rejection-rca-and-fix-list]]
-   > (fix-list item 16) measured the directory at **750 voice artifacts**. It also corrects the
-   > attribution above: the bridge's own voice cleanup is **correct** — the `finally`-block unlinks
-   > do their job. The debris comes from direct test invocations and mid-synthesis kills, neither of
-   > which runs the `finally`. **Consequence: more `finally` blocks would not fix this.** The agreed
-   > fix is a startup or daily sweep. Decided, not built.
+7. **Temp-file growth and cleanup (resolved 2026-07-24 — PR #71).** The voice spec adds inbound temp files per voice note (`.ogg`) plus outbound intermediates (synthesized WAV → converted OGG) per voice-origin reply, compounding [[capabilities/telegram-frontend]]'s pre-existing cleanup debt. [[sources/2026-07-23-rejection-rca-and-fix-list]] (fix-list item 16) diagnosed the cause: the bridge's own `finally`-block unlinks are correct; the 750-file backlog came from test runs and mid-synthesis kills that bypass cleanup. **The fix is a daily/startup sweep, shipped in PR #71** (`feat/rachel-tmp-sweep`, merged 2026-07-24): the 30-min proactive tick now removes `~/.rachel/tmp/` files 6+ hours old, with symlink and directory guards.
 
 ## Superseded by the 2026-07-23 RCA
 

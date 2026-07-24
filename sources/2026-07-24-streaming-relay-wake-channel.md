@@ -1,16 +1,17 @@
 ---
-title: "Spec — Streaming Ticker + Completion→Wake Channel (approved, not built)"
+title: "Spec — Streaming Ticker + Completion→Wake Channel (wake consumer shipped, ticker pending)"
 type: source
 created: 2026-07-24
 last_updated: 2026-07-24
+ship_status: "PR #76 (wake-channel-consumer) merged 2026-07-24; ticker (Decisions A/B/C/D) still pending"
 sources: ["docs/coderails/specs/spec-streaming-relay-wake-channel.md", "docs/coderails/specs/rca-2026-07-23-fix-list.md", "bridge/telegram-bridge.ts", "bridge/api.ts", "proactive/push.ts", "prompts/system.md", "rachel.ts"]
 tags: [spec, approved-not-built, telegram, bridge, streaming, ticker, wake-channel, proactive, decision-record, answer-first]
 ---
 
-> ⚠️ **NOT BUILT.** This is an approved design, not shipped behaviour. Zero of the three PRs have
-> landed and the live drill has not run. Nothing on this page describes what Rachel does today.
-> Read [[capabilities/telegram-frontend]] and [[capabilities/proactive-layer]] for current
-> behaviour.
+> ⚠️ **PARTIAL SHIP.** PR #76 (wake-channel-consumer, file-drop wake) shipped 2026-07-24. The
+> streaming ticker (Decisions A/B/C/D) and live drill remain pending. The completion→wake channel
+> mechanics below are live; the ticker design is a future decision. For current behaviour, read
+> [[capabilities/telegram-frontend]] and [[capabilities/proactive-layer]].
 
 ## Why this page exists
 

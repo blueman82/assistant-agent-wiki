@@ -3,6 +3,7 @@ title: "Telegram Front-End"
 type: capability
 created: 2026-07-07
 last_updated: 2026-07-24
+sources_update: "PR #71 (rachel-tmp-sweep) merged; temp-cleanup moved to open"
 sources: ["bridge/telegram-bridge.ts", "bridge/api.ts", "bridge/speech.ts", "bridge/launchd.plist", "bridge/notify.ts", "rachel.ts", "gate/surfaces/telegram.ts", "proactive/push.ts", "proactive/sweep.ts", "proactive/sessionPersist.ts", "prompts/system.md", "CLAUDE.md", "AGENTS.md"]
 tags: [capability, telegram, bridge, front-end, emit-channel, image-reception, pdf-ingestion, voice, stt, tts, self-monitoring, heartbeat, proactive, character-count, session-persistence, turn-timeout, backgrounding]
 ---
@@ -93,7 +94,7 @@ And, added by PR #54 as a parallel "Receiving PDFs from Telegram" section:
 > When a message begins with `[document: <path>]`, always call the `Read` tool on that absolute path to read the PDF content, then respond based on what's in it.
 
 **Known debt** (both apply to PDFs equally now — PR #54 didn't introduce or fix either):
-- Temp files in `~/.rachel/tmp/` are never cleaned up — the directory grows over time. No cleanup is scheduled. Every ingested PDF adds to the same unbounded directory as images and voice-note intermediates.
+- **Temp file cleanup is now live (PR #71, `feat/rachel-tmp-sweep`, merged 2026-07-24).** The proactive sweep now removes stale files from `~/.rachel/tmp/` on each 30-minute tick (6+ hours old, with symlink and directory guards). This closes the long-standing "directory grows unbounded" debt that had applied to images (PR #17) and voice intermediates.
 - No abort signal is threaded into `downloadFile` — a hung Telegram CDN will stall the entire poll loop until Node's default fetch times out. Also no file-size cap on the download itself (Telegram's own 20 MB `getFile` ceiling is the only limit, per the pre-existing guard below) — a pre-existing gap, not introduced or fixed by PR #54.
 
 ## Voice in/out — STT+TTS (Tasks 4, 6-9, PR #42)

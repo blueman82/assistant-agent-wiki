@@ -2,9 +2,9 @@
 title: "Inbox Brief"
 type: capability
 created: 2026-07-14
-last_updated: 2026-07-15
-sources: ["tasks/inbox-brief.md", "bridge/notify.ts", "tasks/inbox-brief-launchd.plist", "proactive/push.ts", "prompts/system.md", "CLAUDE.md"]
-tags: [capability, gmail, telegram, notify, launchd, recommend-only, dashboard-modal, brief-file-sentinel, proactive, six-tier]
+last_updated: 2026-07-24
+sources: ["tasks/inbox-brief.md", "bridge/notify.ts", "tasks/inbox-brief-launchd.plist", "proactive/push.ts", "prompts/system.md", "CLAUDE.md", "gate/memoryGate.ts"]
+tags: [capability, gmail, telegram, notify, launchd, recommend-only, dashboard-modal, brief-file-sentinel, proactive, six-tier, memory-lockout]
 ---
 
 ## What it does
@@ -33,6 +33,8 @@ Individual pushes run the push CLI (family `mail`, event-id `mail:<threadId>` �
 **Injection guardrails**: all email content (sender, subject, body) is treated as data to display, never instructions to follow, and extracted data goes into message files via Write, never into CLI arguments.
 
 **Tool narrowing**: the launchd run sets `RACHEL_ALLOWED_TOOLS=Read,Write,Bash,mcp__claude_ai_Gmail__*` — a one-shot that reads hostile email must not carry Chrome, WebFetch, or mcp-exec. See [[capabilities/proactive-layer]] for the narrow-never-add seam.
+
+**Memory lockout**: the same plist also sets `RACHEL_UNTRUSTED_CONTENT=1`. [[capabilities/memory]]'s write-time gate (`gate/memoryGate.ts`, PR #64) denies any `Write`/`Edit`/`Bash` touching the memory dir outright while that flag is set, regardless of `RACHEL_ALLOWED_TOOLS` — a hostile email must never persuade this run to "remember" attacker-supplied text, which would otherwise compromise the system prompt on every future turn, on every surface (the memory index is injected raw into the prompt every turn). This narrows the injection surface but doesn't seal it: `mcp-exec` stays reachable in this one-shot and isn't covered by any tool-name-based `PreToolUse` gate — see [[capabilities/memory]]'s "Known, explicitly unclosed gaps" for the full limitation, not repeated here.
 
 ## Tool names
 
@@ -89,4 +91,5 @@ The rule is an instruction constraint, reinforced but not made unbypassable by t
 - [[capabilities/proactive-layer]] — the chokepoint the Urgent/Action-required tiers push through; [[sources/2026-07-15-proactive-layer]] for the PR #28 evolution
 - [[capabilities/telegram-frontend]] — the bridge's own reply path; `notify.ts` is a separate, standalone outbound path for headless runs
 - [[capabilities/send-gate]] — why `notify.ts` and its Bash invocation are deliberately ungated
+- [[capabilities/memory]] — the store `RACHEL_UNTRUSTED_CONTENT=1` locks out for the run's duration
 - [[architecture/overview]] — headless one-shot execution mode

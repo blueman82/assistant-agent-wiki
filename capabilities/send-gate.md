@@ -53,3 +53,4 @@ Gmail has no send tool (only `create_draft` + read/label/search) — nothing to 
 - [[patterns/extending-system-md]] — the prompt-level draft-first contract this gate enforces mechanically
 - [[sources/2026-07-23-pr59-bypass-permissions]] — the `permissionMode` flip to `bypassPermissions` and why the gate still fires under it
 - [[sources/2026-07-23-rejection-rca-and-fix-list]] — fix-list item 14: `bashPatterns.ts` as the sole remaining send enforcement under bypass, with its named coverage holes
+- [[sources/2026-07-24-memory-hardening-cluster]] — a sibling `PreToolUse` hook, `gate/memoryGate.ts` (PR #64), added alongside this one; same detached-`claude -p`-loads-no-hooks blind spot, and the same three-round path-resolution bypass pattern (string check vs. filesystem symlink resolution) worth reading if extending this gate

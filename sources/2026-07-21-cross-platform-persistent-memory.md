@@ -2,7 +2,7 @@
 title: "Cross-platform persistent memory for Rachel (PRs #49-#52)"
 type: source
 created: 2026-07-21
-last_updated: 2026-07-21
+last_updated: 2026-07-24
 sources: ["prompts/system.md", "proactive/memoryIndex.ts", "proactive/sessionPersist.ts", "rachel.ts", "bridge/telegram-bridge.ts", "bridge/launchd.plist"]
 tags: [memory, session-persistence, telegram, bridge, cross-platform, sdk-env]
 ---
@@ -25,6 +25,8 @@ These are deliberately separate systems, not one unified mechanism — see [[inv
 **Size guard (PR #51).** `composeSystemPrompt` caps the injected index at 32 KiB. Over that, it truncates to a head slice plus an explicit marker (`[MEMORY.md truncated at 32768 bytes — consolidate the index...]`) — never a silent drop, so the agent can tell truncation happened and knows to self-consolidate per the prompt contract. Also an early return for an empty or whitespace-only `MEMORY.md` (no trailing-whitespace artifact in the prompt).
 
 **UTF-8 truncation boundary fix (PR #52).** The first truncation cut was a raw byte slice (`Buffer.subarray(0, MAX_INDEX_BYTES)`), which can land mid-character — the operator's writing style uses em dashes and accented names routinely — producing a `U+FFFD` replacement character in the truncated tail. Fixed with a backward scan over UTF-8 continuation bytes (`(buf[cut] & 0xc0) === 0x80`) from the cut point, so the slice always lands on a character boundary. Regression test pins an em dash (3-byte UTF-8) straddling exactly the 32 KiB boundary.
+
+> ⚠️ **Superseded (2026-07-24, PR #62, `0ee4c28`)**: the head-slice truncation direction described in the two paragraphs above is no longer current. Because `MEMORY.md` is append-ordered, keeping a head slice silently evicted the *newest* memories on every truncation — the opposite of what PR #51/#52 intended. PR #62 flips this to a tail-keep (and the UTF-8 boundary scan now advances forward, not backward, since the kept slice is the end of the buffer). The marker text also changed. See [[capabilities/memory]] for the corrected, current description and [[sources/2026-07-24-memory-hardening-cluster]] for the full fix.
 
 ## 2. Bridge session persistence (PR #51 — `7f8d2a4`, PR #52 — `f38c074`)
 

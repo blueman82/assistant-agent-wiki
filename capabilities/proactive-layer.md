@@ -130,3 +130,4 @@ Four launchd services live: `com.rachel.telegram-bridge` (restarted onto heartbe
 - [[architecture/overview]] — headless one-shot execution mode
 - [[sources/2026-07-24-streaming-relay-wake-channel]] — **approved, not yet built**: a completion→wake channel (`~/.rachel/wake/`) whose `fyi` mode routes through the `push.ts` chokepoint above, plus a new auto-remediating stale-process sweep family (restart the bridge onto new main, then FYI — never ask). Consumed by the bridge poll loop, deliberately **not** by this 30-minute sweep (latency).
 - [[sources/2026-07-23-rejection-rca-and-fix-list]] — the RCA behind that spec; its finding 2 (nothing but an inbound Telegram message can start a turn) is why a wake channel is needed at all
+- [[sources/2026-07-24-memory-hardening-cluster]] — PR #63 added a 6th sweep family, `memory-lint`, running `proactive/memoryLint.ts`'s schema scan every 30 minutes, dedup-keyed on a hash of the violation set

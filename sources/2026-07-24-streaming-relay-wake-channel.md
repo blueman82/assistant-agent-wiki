@@ -21,6 +21,15 @@ contains neither this spec nor the RCA it derives from.
 Built from items **10, 11 and 17** of the fix list in
 [[sources/2026-07-23-rejection-rca-and-fix-list]] (that page carries the canonical numbering).
 
+**It also closes an older task.** `assistant-agent/tasks/2026-07-20-telegram-streaming-responses.md`
+(from the 2026-07-20 `raw/task_to_do.md` ingest) asked the same question four days earlier and was
+blocked on "Telegram Bot API rate limits for `editMessageText` aren't known yet". That file is now
+`status: superseded`, pointing here; both of its open questions are answered below (the rate-limit
+design in [[#Ticker behaviour]], and the surface-awareness question made moot by the ticker being
+bridge-side and mechanical). One deliberate scope difference is recorded there: that task wanted
+streaming that *matches the input mode* (voice-in → voice stream), which Decision A explicitly does
+not do — candidate C was the version that would have, and it lost.
+
 ## The three problems
 
 1. **Dead air mid-turn.** The bridge buffers *all* of Rachel's output and sends it only when the

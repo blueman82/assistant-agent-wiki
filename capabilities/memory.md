@@ -3,7 +3,7 @@ title: "Memory"
 type: capability
 created: 2026-07-21
 last_updated: 2026-07-24
-sources: ["prompts/system.md", "proactive/memoryIndex.ts", "proactive/memoryIndex.test.ts", "proactive/memoryLint.ts", "gate/memoryGate.ts", "rachel.ts", "proactive/memoryLock.ts", "proactive/memoryAppend.ts"]
+sources: ["prompts/system.md", "proactive/memoryIndex.ts", "proactive/memoryIndex.test.ts", "proactive/memoryLint.ts", "gate/memoryGate.ts", "gate/auditLog.ts", "rachel.ts", "proactive/memoryLock.ts", "proactive/memoryAppend.ts"]
 tags: [capability, memory, persistence, deterministic-injection, cross-platform, write-gate, lint]
 ---
 
@@ -51,7 +51,7 @@ Recall is not left to the model noticing the file exists — `composeSystemPromp
 
 The write/recall contract above was, until PRs #62-#65, enforced by nothing but the prompt — verified empirically: the first-ever memory file had no frontmatter at all. Three code layers now back it (all merged, `main` HEAD `4d4ea4a`), deliberately divided so each covers a different gap:
 
-- **Write-time gate**: a third `PreToolUse` hook in `rachel.ts` (alongside [[capabilities/send-gate]]'s hook) denies a `Write` inside the memory dir whose frontmatter fails validation (missing `name`/`description`/`type`, invalid `type`, or a `name`≠filename-slug mismatch), and denies *any* memory-dir `Write`/`Edit`/`Bash` outright when `RACHEL_UNTRUSTED_CONTENT` is set (currently only in `tasks/inbox-brief-launchd.plist`, since that one-shot processes hostile email while holding `Write`).
+- **Write-time gate**: a third `PreToolUse` hook in `rachel.ts` (alongside [[capabilities/send-gate]]'s hook) denies a `Write` inside the memory dir whose frontmatter fails validation (missing `name`/`description`/`type`, invalid `type`, or a `name`≠filename-slug mismatch), and denies *any* memory-dir `Write`/`Edit`/`Bash` outright when `RACHEL_UNTRUSTED_CONTENT` is set (currently only in `tasks/inbox-brief-launchd.plist`, since that one-shot processes hostile email while holding `Write`). Every deny is now audit-logged to the same `RACHEL_AUDIT_LOG_PATH` trail the send gate writes to, tagged with a `surface` label identifying which check denied (PR #68 — see [[sources/2026-07-24-memorygate-audit-logging]]); the hook's own outer catch also binds and logs the real thrown error instead of discarding it, a fix from the same PR.
 - **Periodic lint**: the same schema validator (`validateFrontmatter`, shared — one implementation, two callers) runs as a 6th family in the 30-minute proactive sweep, catching anything the hook doesn't see: `Edit` results, obfuscated `Bash`, manual filesystem edits, or a detached `claude -p` spawn (which loads no hooks at all).
 - **Locked appends**: `MEMORY.md` is read-modify-write across the terminal, the Telegram bridge, and headless one-shots concurrently; the repo's usual atomic temp-file+rename idiom gives durability but not mutual exclusion, so two near-simultaneous appends could silently drop one pointer line. `proactive/memoryAppend.ts` (invoked as `npx tsx proactive/memoryAppend.ts "<title>" "<file>" "<hook>"`, per `prompts/system.md`) wraps the append in an `O_EXCL` lockfile mutex (`proactive/memoryLock.ts`) and rejects (never sanitises) a title/file/hook containing a newline, carriage return, or `[ ] ( )` that could corrupt or forge a pointer line.
 
@@ -65,6 +65,7 @@ Memory and Telegram session continuity ([[capabilities/telegram-frontend]]'s bri
 
 - [[sources/2026-07-21-cross-platform-persistent-memory]] — the PR cluster (#49, #50) that built this
 - [[sources/2026-07-24-memory-hardening-cluster]] — PRs #62-#65 (all merged): truncation direction fix, periodic lint, write-time gate, locked-append write lock
+- [[sources/2026-07-24-memorygate-audit-logging]] — PR #68: audit logging on every write-gate deny path, plus a fix for a catch block that was discarding the real thrown error
 - [[investigations/2026-07-21-rejected-shared-session-thread]] — why this is separate from session persistence
 - [[architecture/overview]] — where `composeSystemPrompt` sits in the turn-construction pipeline
 - [[capabilities/tasks]] — the other store; time-bound action items go there, not here

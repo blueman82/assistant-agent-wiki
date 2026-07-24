@@ -3,7 +3,7 @@ title: "Send Gate"
 type: capability
 created: 2026-07-07
 last_updated: 2026-07-24
-sources: ["rachel.ts", "gate/sendGate.ts", "gate/surfaces/telegram.ts", "gate/surfaces/queue.ts", "bridge/telegram-bridge.ts", "bridge/notify.ts", "proactive/push.ts", "prompts/system.md", "AGENTS.md", "node_modules/@anthropic-ai/claude-agent-sdk/sdk.d.ts"]
+sources: ["rachel.ts", "gate/sendGate.ts", "gate/memoryGate.ts", "gate/auditLog.ts", "gate/surfaces/telegram.ts", "gate/surfaces/queue.ts", "bridge/telegram-bridge.ts", "bridge/notify.ts", "proactive/push.ts", "prompts/system.md", "AGENTS.md", "node_modules/@anthropic-ai/claude-agent-sdk/sdk.d.ts"]
 tags: [capability, gate, security, slack, calendar, telegram]
 ---
 
@@ -32,7 +32,7 @@ Gmail has no send tool (only `create_draft` + read/label/search) — nothing to 
 - **Approval surfaces** (first answer wins): terminal y/n (interactive TTY), Telegram inline Approve/Deny buttons, or the dashboard queue file under `~/.claude/coderails-dashboard/approvals/` (`DEFAULT_QUEUE_DIR` in `gate/surfaces/queue.ts`).
 - **Telegram surface routing**: the Telegram approval surface (`gate/surfaces/telegram.ts`) does not poll Telegram itself — it exposes `handleCallbackQuery`, and the Telegram front-end bridge (`bridge/telegram-bridge.ts`, see [[capabilities/telegram-frontend]]) owns the single `getUpdates` long-poll loop and feeds matching `callback_query` updates into it. A button tap is routed ahead of any queued chat turn, since a gate decision may be blocking a turn already in flight.
 - **Bash defense-in-depth**: a `Bash` command matching a known send-API pattern (Slack `chat.postMessage`, Telegram `sendMessage`, Gmail `messages/send`, a `POST` to the Calendar events endpoint) is denied outright and redirected to the corresponding MCP tool.
-- **Audit**: every attempt and decision is appended to `~/.rachel/send-gate-audit.jsonl`.
+- **Audit**: every attempt and decision is appended to `~/.rachel/send-gate-audit.jsonl`. Since PR #68 (2026-07-24), the sibling memory write gate (`gate/memoryGate.ts`, [[capabilities/memory]]) writes its own deny decisions to this same `RACHEL_AUDIT_LOG_PATH`-resolved file, distinguished by a `surface` label (`untrusted-lockout`, `untrusted-lockout-bash`, `frontmatter-schema`, `internal-error`) rather than a separate log — see [[sources/2026-07-24-memorygate-audit-logging]].
 
 ## Constraints / gotchas
 
@@ -54,3 +54,4 @@ Gmail has no send tool (only `create_draft` + read/label/search) — nothing to 
 - [[sources/2026-07-23-pr59-bypass-permissions]] — the `permissionMode` flip to `bypassPermissions` and why the gate still fires under it
 - [[sources/2026-07-23-rejection-rca-and-fix-list]] — fix-list item 14: `bashPatterns.ts` as the sole remaining send enforcement under bypass, with its named coverage holes
 - [[sources/2026-07-24-memory-hardening-cluster]] — a sibling `PreToolUse` hook, `gate/memoryGate.ts` (PR #64), added alongside this one; same detached-`claude -p`-loads-no-hooks blind spot, and the same three-round path-resolution bypass pattern (string check vs. filesystem symlink resolution) worth reading if extending this gate
+- [[sources/2026-07-24-memorygate-audit-logging]] — PR #68: the memory gate now shares this gate's audit file and `appendAudit` pattern, having previously audited nothing

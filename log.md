@@ -385,3 +385,5 @@ Ran the same wiki-lint skill independently, concurrently with the pass immediate
 
 **Checked and clean, vault-wide (scripted, this session):** 0 broken wikilinks (same one sanctioned false positive, `AGENTS.md`'s `[[decisions/...]]` prose), 0 orphans, 0 pages over the 90-day staleness threshold.
 <!-- lint-findings: 1 -->
+
+## [2026-07-24] ingest | Memory write gate audit logging + error-swallowing catch fix (assistant-agent PR #68, merged `2026-07-24T01:07:41Z`): new sources/2026-07-24-memorygate-audit-logging.md; updated capabilities/memory.md (write-time-gate section now notes the shared audit trail) and capabilities/send-gate.md (audit bullet + Relationships note that the memory gate now shares its audit file); updated index.md. Framing note carried into the new page: this closes an omission [[sources/2026-07-24-memory-hardening-cluster]] never recorded (its "known, explicitly unclosed gaps" section names only `mcp-exec` reachability and prompt-only lock routing), not a documented gap flipping to closed.

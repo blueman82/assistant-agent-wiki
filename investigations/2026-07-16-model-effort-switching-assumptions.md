@@ -2,10 +2,12 @@
 title: "Runtime model/effort switching — plan assumptions vs. enforced code"
 type: investigation
 created: 2026-07-16
-last_updated: 2026-07-16
+last_updated: 2026-07-24
 sources: ["rachel.ts", "bridge/telegram-bridge.ts", "proactive/allowedTools.ts", "node_modules/@anthropic-ai/claude-agent-sdk/sdk.d.ts", "AGENTS.md"]
 tags: [investigation, model-config, allowed-tools-seam, telegram-commands, sdk-options]
 ---
+
+**Shipped.** This plan was built as `proactive/modelConfig.ts` — see [[capabilities/model-effort]] for the current, enforced behavior. This page is kept as the pre-implementation assumptions record; it is not itself current documentation of the shipped feature.
 
 ## Question
 

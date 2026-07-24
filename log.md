@@ -417,4 +417,4 @@ Ran the standard mechanical sweep (orphans, broken wikilinks, `⚠️ CONTRADICT
 2. **Handed off, not logged a 7th time: model/effort capability page.** This one is genuinely new-page/ingest scope, not lint's to author — but `coderails-wiki-ingest` was live in the session roster, so sent it directly via `SendMessage` with the full evidence trail (`proactive/modelConfig.ts` exists and is wired into `rachel.ts:216-217`; `index.md` only links the pre-implementation `investigations/2026-07-16-model-effort-switching-assumptions.md`) rather than re-surfacing it in this log for a Gary decision that had already sat unmade for 6 passes. Asked it to write `capabilities/model-effort.md`, update the investigation page's framing from plan to shipped, and repoint `index.md`.
 
 **No third finding.** Vault is structurally clean and both standing items are now either closed or actively delegated — nothing left in limbo.
-<!-- lint-findings: 0 -->
+<!-- lint-findings: 2 -->

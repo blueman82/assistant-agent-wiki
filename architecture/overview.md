@@ -2,7 +2,7 @@
 title: "Architecture Overview"
 type: architecture
 created: 2026-06-07
-last_updated: 2026-07-21
+last_updated: 2026-07-24
 sources: ["rachel.ts", "prompts/system.md", "CLAUDE.md", "proactive/memoryIndex.ts", "proactive/sessionPersist.ts"]
 tags: [architecture, sdk, core, memory, session-persistence]
 ---
@@ -41,7 +41,7 @@ One long-lived process, one session. `sessionId` is set on the first turn's `ini
 
 | Variable | Default | Effect |
 |----------|---------|--------|
-| `RACHEL_MODEL` | `claude-sonnet-4-6` | Model |
+| `RACHEL_MODEL` | `claude-sonnet-5` | Model |
 | `RACHEL_MAX_TURNS` | `200` | Max agent turns per request |
 | `RACHEL_ALLOWED_TOOLS` | unset (= full default list) | Comma-separated narrowing of the agent's allowedTools; remove-only, zero-tools throws (see [[capabilities/proactive-layer]]) |
 | `RACHEL_MEMORY_PATH` | unset (= `~/.rachel/memory/MEMORY.md`) | Path to the memory index composed into the system prompt every turn (see [[capabilities/memory]]) |

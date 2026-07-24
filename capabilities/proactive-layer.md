@@ -62,6 +62,8 @@ Exactly five arguments; a sixth of any kind is rejected. Success = exit 0 + exac
 | bridge-liveness | `bridge:liveness` | `up` \| `down` | urgent (down) / normal (up) | `[urgent · bridge]`, `[bridge]` |
 | bridge-liveness | `bridge:drain-stall` | the `turn_in_flight_since` timestamp | normal | `[bridge]` |
 | bridge-startup / bridge-health / loop-watchdog | (bridge-internal, see [[capabilities/telegram-frontend]]) | — | normal | — |
+| memory-lint | `memory:<violation-type>` | hash16 of violation set | normal | `[memory]` |
+| tmp-sweep | (family only, no event-id) | — | — (silent, no push) | — |
 | digest flush | — | — | — | `[digest]` |
 
 State strings are chosen so **news re-arms and non-news dedups**: a new head SHA on a still-red PR re-pings; a rescheduled calendar conflict changes the hash16 and re-arms both channels; a new reply on an already-pinged mail thread changes `<latest-message-id>`.
@@ -70,7 +72,13 @@ The `:2h` suffix on the sweep's calendar escalation is deliberate (red-team find
 
 ## The sweep (`proactive/sweep.ts`, PRs #25 + #26)
 
-Fixed tick order: **deferred flush → bridge-liveness → PR-red → calendar-escalation → calendar one-shot spawn.** Each family runs in its own try/catch so one broken family never blocks the others; any family failure makes the tick exit 1 so launchd's last-exit-status is machine-visible (monitor death is never a green tick over dead delivery).
+Fixed tick order: **deferred flush → bridge-liveness → PR-red → calendar-escalation → calendar one-shot spawn → tmp-sweep.** Each family runs in its own try/catch so one broken family never blocks the others; any family failure makes the tick exit 1 so launchd's last-exit-status is machine-visible (monitor death is never a green tick over dead delivery).
+
+### Tmp-sweep family (PR #71, merged 2026-07-24)
+
+Cleans stale files from `~/.rachel/tmp/` — voice transcripts, synthesised audio, downloaded images. Non-recursive, one-time `readdirSync` on the directory. Files older than 1 hour (6x the longest legitimate lifetime: 10-min turn timeout + 5-min synthesis ceiling) are deleted via individual `unlink` calls. Each unlink is wrapped: one unremovable file is logged and the sweep continues. Missing tmp directory is a silent no-op. **Deliberately silent** — `tmp-sweep` never calls `push()`, so routine hygiene doesn't consume the daily interrupt budget. Safety net for files escaping the per-turn `finally` blocks (e.g., a process killed mid-synthesis).
+
+**Why this family in the 30-min sweep, not a bridge startup sweep:** startup-only would miss debris from long-lived bridge sessions (the directory grew to 750+ files across ~1.5 days before this PR). A recurring tick bounds growth at all times. No new launchd plist or service — the sweep's existing tick is reused.
 
 - **PR-red**: `gh pr list --author @me` per watched repo, then `gh pr checks --json name,bucket,state`; red iff any check lands in gh's `fail` **bucket** (covers TIMED_OUT, STARTUP_FAILURE etc., which a state-string comparison would miss). Per-repo and per-PR isolation. Non-zero exit with empty stdout = no checks / gh failure → skip, never abort the family. Recovery is not pinged; stale entries age out via 14-day eviction.
 - **Bridge liveness**: see the liveness boundary below.

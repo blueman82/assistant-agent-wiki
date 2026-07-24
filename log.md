@@ -437,3 +437,47 @@ Re-verified vault against four un-ingested assistant-agent PRs merged since the 
 
 **Finding count: 4** (four stale claim corrections, all fixed).
 <!-- lint-findings: 4 -->
+
+## [2026-07-24] ingest | RCA telebot-hardening cluster (six PRs: assistant-agent #69-72 + #76, coderails #298, autonomous mode)
+
+**Cluster theme:** multiple apparent protections and capabilities were not actually working. Ingest completed in autonomous mode per wiki-cluster override.
+
+### Pages created
+
+- **new `sources/2026-07-24-rca-telebot-hardening.md`** — cluster source page capturing all six PRs as one coherent RCA response. Breakdown: RCA items 1-4 (voice HF_HUB_OFFLINE fix + model pre-fetch + transcribe timeout 30s→120s), item 14 (send-gate bashPatterns five holes closed), item 16 (tmp-sweep family), items 5-9 (ghost-rejection hardening), wake-channel consumer (PR 2), and coderails #298 (.env secret-file protection). Cross-repo dependencies explicitly documented.
+- **new `architecture/voice-pipeline.md`** — architecture page documenting the STT/TTS subprocess layer (`mlx-whisper`, `mlx-audio/Kokoro`), the HF_HUB_OFFLINE stall fix (why offline mode + pre-fetch, env replacement trap, setup.sh), synthesis timeout scaling (30s→120s in PR #55, length-scaled in PR #55 post-fix), setup.sh bootstrapping.
+- **new `sources/2026-07-24-ghost-rejection-hardening.md`** — PR #72: documents both machine-generated rejection mechanisms (turn-death ghost from 10-min deadline, unanswered permission prompt under old `auto` mode). Items 5-7 (documentation + abort inoculation + turn budgeting), items 8-9 (turn-start logging + synthesis-failure log truncation). Also inoculates `/stop` command same way.
+- **new `sources/2026-07-24-wake-channel-consumer.md`** — PR #76: file-drop wake channel at `~/.rachel/wake/` lets detached jobs start Rachel turns. Mode routing, SDK-spend guard (only `narrate` starts turns, unknown modes safe-default to FYI via push.ts), at-most-once semantics (rename before dispatch), 5-per-iteration flood cap. Lands inert; producers in PR 3.
+
+### Pages updated
+
+- **`capabilities/send-gate.md`** — Added comprehensive table of five bashPatterns holes closed by PR #70 (curl --data, short -d, Telegram sendVoice/sendDocument, Slack chat.update/delete, Gmail drafts/send), plus near-miss controls proving no over-broadening. Also added cross-repo dependency section documenting PR #298 (.env gap in coderails' destructive_bash_gate.sh, critical for bridge turns under `bypassPermissions`). Updated Relationships to link new RCA source page.
+- **`capabilities/proactive-layer.md`** — Added tmp-sweep family details (PR #71: 1-hour age threshold, 6x legitimate lifetime ceiling, non-recursive, per-file unlink wrapping, silent operation). Updated fixed tick order to include tmp-sweep; added table row. Corrected earlier confusion: two concurrent ingest sessions had conflicting updates to the same page (turn timeout attribution to PR #46 vs #56, drain-stall dedup keying) — re-verified source and confirmed lint pass had already fixed both; left as-is.
+- **`index.md`** — Added `[[architecture/voice-pipeline]]` to Architecture section. Updated proactive-layer line to mention tmp-sweep. Added four new 2026-07-24 source entries (RCA telebot-hardening, ghost-rejection, wake-channel-consumer, wake-channel spec) in Sources section, with clear brief descriptions of scope (e.g., "cluster source" vs. individual PRs, "lands inert").
+
+### Verification
+
+- **Architecture page new-to-repo:** read fully, confirmed links to existing pages (capabilities/telegram-frontend, sources/2026-07-22-pr55, investigations/2026-07-18), no orphans or broken wikilinks created.
+- **Four source pages new-to-repo:** all have consistent frontmatter (title/type/created/last_updated/sources/tags), all linked from index.md or parent pages, cross-links verified (e.g., ghost-rejection links to telegram-frontend for turn timeout context, wake-channel links to proactive-layer for push.ts routing).
+- **Index.md updates:** verified all four new source entries are linked correctly, "Brief" descriptions added per schema. Architecture entry points to live file.
+- **Send-gate and proactive-layer updates:** both pages' `last_updated` already set to 2026-07-24 by a concurrent session (PR #68 ingest); no frontmatter conflict. Sources lists include the new RCA source page.
+
+### Lint findings
+
+**0 orphans** — all new pages linked from index.md; the new architecture page is referenced from index and from multiple source pages.
+
+**0 broken wikilinks** — all internal `[[...]]` references verified to exist; only pre-existing sanctioned gaps remain (`[[capabilities/email]]` / `[[capabilities/calendar]]` marked "Not yet documented" in index).
+
+**0 contradictions** — RCA source page's claim that bashPatterns is "complete" (all five holes closed) matches the send-gate page's table. Ghost-rejection's timeline (600s exact deadline) matches capabilities/telegram-frontend's `DEFAULT_TURN_TIMEOUT_MS` and PR #46 attribution (now corrected by concurrent lint pass).
+
+**0 stale pages** — all four new/updated pages carry `last_updated: 2026-07-24`.
+
+**Handoff items for lint pass:**
+
+Three pieces already flagged by prior lints remain outstanding and are not lint scope:
+1. Email/calendar capability pages still marked "Not yet documented." — pre-existing sanctioned gap
+2. Model/effort capability page — handed to coderails-wiki-ingest in a SendMessage during a concurrent lint pass; awaiting write
+3. Raw/task_to_do.md still fully triaged but unprocessed — pre-existing triaged-not-deleted convention
+
+**No corrections needed:** the concurrent PR #68 ingest and lint pass (2026-07-24 01:07, commit 18da434) already landed before this ingest, so there are no stale references or contradictions from that batch. The two standing PR #46 misattribution and drain-stall dedup items (six-pass standing) were also fixed by the same lint pass (2026-07-24 11:07).
+<!-- ingest-findings: 0 -->

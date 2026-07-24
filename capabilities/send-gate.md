@@ -65,5 +65,6 @@ Each pattern was mutation-tested individually (six mutants all killed, zero surv
 - [[patterns/extending-system-md]] — the prompt-level draft-first contract this gate enforces mechanically
 - [[sources/2026-07-23-pr59-bypass-permissions]] — the `permissionMode` flip to `bypassPermissions` and why the gate still fires under it
 - [[sources/2026-07-23-rejection-rca-and-fix-list]] — fix-list item 14: `bashPatterns.ts` as the sole remaining send enforcement under bypass; the coverage gaps documented there were closed by PR #70
+- [[sources/2026-07-24-rca-telebot-hardening]] — RCA cluster merging six PRs (assistant-agent #69-72, #76, coderails #298) to harden Telegram failures. Items 12 and 14 document the bashPatterns holes and the coderails secret-file guard dependency.
 - [[sources/2026-07-24-memory-hardening-cluster]] — a sibling `PreToolUse` hook, `gate/memoryGate.ts` (PR #64), added alongside this one; same detached-`claude -p`-loads-no-hooks blind spot, and the same three-round path-resolution bypass pattern (string check vs. filesystem symlink resolution) worth reading if extending this gate
 - [[sources/2026-07-24-memorygate-audit-logging]] — PR #68: the memory gate now shares this gate's audit file and `appendAudit` pattern, having previously audited nothing

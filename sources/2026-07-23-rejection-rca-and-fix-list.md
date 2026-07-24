@@ -146,25 +146,27 @@ items 10, 11 and 17 by these numbers.
 - **PR #61** (speech.ts docs) — merged.
 - **Voice pipeline (finding 3, items 1-3)** — PR #69 (`fix/voice-pipeline-hf-offline`, merged 2026-07-24) sets `HF_HUB_OFFLINE=1` for both `transcribe()` and `synthesize()`, and pre-fetches models in `scripts/speech/setup.sh`. **Item 4** (transcribe budget → 2 minutes) remains decided but unbuilt.
 - **Bash send patterns (item 14)** — PR #70 (`fix/bashpatterns-send-coverage`, merged 2026-07-24) closed the coverage gaps: `curl --data` POSTs, Telegram `sendVoice`/`sendDocument`, Slack `chat.update`/`chat.delete`, Gmail `drafts.send`.
-- **Temp file cleanup (item 16)** — PR #71 (`feat/rachel-tmp-sweep`, merged 2026-07-24) removed the 750-file backlog and installs a 30-min proactive tick to sweep files 6+ hours old.
+- **Temp file cleanup (item 16)** — PR #71 (`feat/rachel-tmp-sweep`, merged 2026-07-24) removed the 750-file backlog and installs a 30-min proactive tick to sweep files **1 hour old** (threshold is 6x the longest legitimate in-use lifetime: `DEFAULT_TURN_TIMEOUT_MS` 10 min + `SYNTHESIZE_CEILING_MS` 300s; strictly-older deletion means a boundary-age file survives).
 
 ### Specced and approved — partially built
 
 Items **10, 11, 17** define [[sources/2026-07-24-streaming-relay-wake-channel]]. PR #76
 (`feat/wake-channel-consumer`, merged 2026-07-24) shipped the file-drop wake consumer (item 17).
-Items 10 and 11 remain unbuilt.
+Items 10 and 11 remain unbuilt; the ticker (PR #74) and producers/overlap rule (PR #75) are open
+in the gate chain and not abandoned.
 
-- **10. Mid-turn progress relay** (Gary's own addition). His complaint verbatim: replies take so
+- **10. Mid-term progress relay** (Gary's own addition). His complaint verbatim: replies take so
   long because Rachel waits until text generation is done, forcing him to read reams of text with
   no sense of progress. He asked for stream events relayed to the human, mindful of Telegram API
-  limits, with jitter/backoff. → Spec Part A. **Not built.**
+  limits, with jitter/backoff. → Spec Part A. **Not built** (PR #74, open).
 - **11. Stale-process family (auto-remediating).** Compare bridge process start time against the
   newest relevant commit on main. **Per Gary's explicit instruction this must not ask for
   approval**: fix it — restart the bridge (bootout → poll-until-gone → bootstrap) — then tell him
-  it was done. → Spec Part B, producer 2. **Not built.**
-- **17. Completion→wake channel — PARTIALLY BUILT (PR #76).** The file-drop wake consumer is live.
-  The mechanical ticker (Decisions A/B/C/D in the spec) and live drill remain. This is the core
-  capability closing finding 2 ("Rachel structurally cannot report back later").
+  it was done. → Spec Part B, producer 2. **Not built** (PR #75, open).
+- **17. Completion→wake channel — PARTIALLY BUILT (PR #76, merged 2026-07-24).** The file-drop wake consumer is live.
+  The mechanical ticker and live drill remain (PR #74). Also pending: PR #77 (stale-process family
+  via the 7th proactive family). This is the core capability closing finding 2 ("Rachel
+  structurally cannot report back later").
 
 ### Decided but not built
 
@@ -176,25 +178,32 @@ Real decisions with no implementation yet. **Nothing below describes current beh
 3. `scripts/speech/setup.sh` pre-fetches and verifies both models — **CLOSED (PR #69).** Both models are cached before offline mode is relied upon, eliminating cold-cache hits.
 4. **Transcribe budget 30s → 2 minutes — decided but unbuilt.** Gary's decision, explicitly overruling the RCA's original "no change" recommendation: a human may legitimately send a longer voice note. No implementation yet.
 
-**B. Ghost-rejection hardening** (all from finding 1)
+**B. Ghost-rejection hardening** (all from finding 1) — **CLOSED (PR #72, 2026-07-24)**
 
 5. `prompts/system.md`: document both machine strings — abort injection vs unanswerable permission
    prompt; check elapsed time before attributing; **never attribute a decline to Gary**; never
-   promise report-backs from in-turn background work.
+   promise report-backs from in-turn background work. **CLOSED (PR #72).**
 6. **Abort inoculation** — after a deadline abort, `drainFifo` prefixes the next turn's prompt with
-   a note that the previous turn was auto-aborted and its rejection strings are artifacts.
+   a note that the previous turn was auto-aborted and its rejection strings are artifacts. **CLOSED (PR #72).**
 7. **Turn budgeting** in `system.md` — split investigations across turns; go detached past ~8
    minutes. **The 10-minute deadline itself stays** (decided, not revisited).
 8. Log turn start plus queue depth — only completion/abort are logged today, which is exactly why
-   this RCA needed JSONL cross-referencing.
-9. Truncate synthesis-failure log detail — one failure wrote a full 9,696-char **private reply**
-   into the log.
+   this RCA needed JSONL cross-referencing. **CLOSED (PR #72).**
+9. Truncate synthesis-failure log detail — one failure wrote a full 12,125-char **private reply**
+   into the log. **CLOSED (PR #72).** Also: review found `/stop` fires the same AbortController as
+   the deadline watchdog and produced the identical ghost string, but only the deadline path was
+   inoculated — now fixed.
 
 **D. Permission surface**
 
 12. **`.env` protection** — nothing guards it now; the deleted hook's block never worked (finding
     5). Fold a deny branch into `destructive_bash_gate.sh`, which already has the correct
-    JSON-decision plumbing. **Decided: yes.** Tiny.
+    JSON-decision plumbing. **CLOSED (coderails PR #298, 2026-07-24).** Root cause: case-sensitive
+    matching on a case-insensitive filesystem allowed uppercase spellings to bypass the guard.
+    Fixed with case-lowering on the command line; also covers editor-backup forms (tilde-suffixed
+    and hash-wrapped autosaves). Disclosed ceiling: glob forms still bypass the literal-token
+    matcher — documented rather than fixed, since this is not a regression against a main that had
+    no guard at all.
 13. **Hooks in Rachel's environment — decided: bless them.** No change.
 14. **`bashPatterns.ts` coverage — CLOSED (PR #70, 2026-07-24).** This is the sole send enforcement left under `bypassPermissions`. Known holes (`curl --data` POSTs, Telegram `sendVoice`/`sendDocument`, Slack `chat.update`/`chat.delete`, Gmail `drafts.send`) are now pattern-matched and denied. See [[capabilities/send-gate]].
 15. **Agent-tool policy under bypass — decided: allow for now.** Gary may later return to auto mode
@@ -202,7 +211,7 @@ Real decisions with no implementation yet. **Nothing below describes current beh
 
 **E. Hygiene**
 
-16. **`~/.rachel/tmp` sweep — CLOSED (PR #71, 2026-07-24).** Removed the 750-file backlog (voice artifacts + image-reception debris). The bridge's own cleanup was correct; the backlog came from test runs and mid-synthesis kills. The 30-min proactive tick now removes files 6+ hours old with symlink and directory guards.
+16. **`~/.rachel/tmp` sweep — CLOSED (PR #71, 2026-07-24).** Removed the 750-file backlog (voice artifacts + image-reception debris). The bridge's own cleanup was correct; the backlog came from test runs and mid-synthesis kills. The proactive sweep (7th family in `proactive/sweep.ts`) removes files **1 hour old** (threshold = 6x the longest legitimate in-use lifetime) with symlink and directory guards; age is strictly-older so boundary-age files survive.
 18. **Ops one-off — triaged, closed.** Stray `claude --dangerously-skip-permissions` processes were
     all interactive terminal sessions under `-zsh` on TTYs (coderails and assistant-agent
     worktrees), not dead Rachel jobs or runaway routines.

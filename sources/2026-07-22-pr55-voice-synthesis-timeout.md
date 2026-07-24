@@ -3,7 +3,7 @@ title: "PR #55 — voice replies failed on long text: the flat 20s synthesis tim
 type: source
 origin: "assistant-agent PR #55 (merged 08f3022, 2026-07-22)"
 created: 2026-07-22
-last_updated: 2026-07-22
+last_updated: 2026-07-24
 sources: ["bridge/speech.ts", "bridge/speech.test.ts", "bridge/telegram-bridge.ts", "scripts/speech/synthesize.py"]
 tags: [source, telegram, voice, tts, bridge, timeout, rca]
 ---
@@ -84,6 +84,26 @@ This closes, from the other direction, a gap
 - **Its item 6** flagged that the spec's cited `execFile`-with-timeout precedent was only
   half-real. The timeout did get implemented, correctly — the defect was that it was a
   constant while the cost it bounds is a function of input length.
+
+### Do not confuse this with the 2026-07-23 RCA
+
+[[sources/2026-07-23-rejection-rca-and-fix-list]] (finding 3) is a **second, different**
+voice-pipeline RCA one day later. Both land in `bridge/speech.ts` and both surface in the bridge log
+as `signal=SIGTERM` from an `execFile` timeout — that shared symptom is exactly the trap.
+
+| | This page (PR #55) | RCA 2026-07-23 |
+|---|---|---|
+| Direction | **Outbound** — TTS synthesis | **Inbound** — STT transcription |
+| Function | `synthesize()` (mlx-audio/Kokoro) | `transcribe()` (mlx-whisper) |
+| Cause | Flat 20s budget vs ~30s real synthesis | A HuggingFace Hub freshness check on every call, hanging when the endpoint is unreachable |
+| Scales with | Reply **length** | Nothing — a network condition, not compute |
+| Log line | `synthesize failed …` | `transcribe failed …` |
+| Status | **Fixed and merged** | **Decided, not built** (fix-list items 1–4) |
+
+The log-line prefix is the discriminator. Note also that the RCA's fix-list item 2 proposes
+`HF_HUB_OFFLINE=1` for `synthesize()` too — it performs its own hub check (`Fetching 56 files`,
+visible in this incident's own log excerpt above), so the same latency tax applies outbound; it just
+wasn't the trigger here.
 
 ## Verification
 

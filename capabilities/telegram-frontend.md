@@ -2,7 +2,7 @@
 title: "Telegram Front-End"
 type: capability
 created: 2026-07-07
-last_updated: 2026-07-23
+last_updated: 2026-07-24
 sources: ["bridge/telegram-bridge.ts", "bridge/api.ts", "bridge/speech.ts", "bridge/launchd.plist", "bridge/notify.ts", "rachel.ts", "gate/surfaces/telegram.ts", "proactive/push.ts", "proactive/sweep.ts", "proactive/sessionPersist.ts", "prompts/system.md", "CLAUDE.md", "AGENTS.md"]
 tags: [capability, telegram, bridge, front-end, emit-channel, image-reception, pdf-ingestion, voice, stt, tts, self-monitoring, heartbeat, proactive, character-count, session-persistence, turn-timeout, backgrounding]
 ---
@@ -243,3 +243,5 @@ Not part of this bridge — a separate, standalone sender for a different execut
 - [[investigations/2026-07-21-rejected-shared-session-thread]] — why bridge session persistence stays narrowly scoped rather than becoming a shared thread
 - [[sources/2026-07-22-adhoc-background-escalation]] — PR #56: the turn-timeout ceiling this bridge enforces, duration logging, and the ad-hoc backgrounding escape hatch (spawning logic lives in `prompts/system.md`, not this bridge)
 - [[sources/2026-07-23-bridge-log-timestamps]] — PR #60: ISO-8601 timestamp prefixes on the bridge's own log lines, and the RCA that motivated it
+- [[sources/2026-07-23-rejection-rca-and-fix-list]] — RCA: the 10-minute deadline above is the source of the "user doesn't want to proceed" ghost rejections (mechanism A, 600s to the second); also why this bridge structurally cannot report back later, and the inbound-STT HuggingFace stall (distinct from the PR #55 outbound-TTS timeout documented above)
+- [[sources/2026-07-24-streaming-relay-wake-channel]] — **approved, not yet built**: a mid-turn progress ticker (one silent `sendMessage` + `editMessageText` edits, consuming the typed emit channel above) and a completion→wake channel that lets a detached job start a turn. Neither exists in this bridge today.

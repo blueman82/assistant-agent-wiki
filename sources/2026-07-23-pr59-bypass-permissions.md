@@ -2,7 +2,7 @@
 title: "PR #59 — permissionMode flipped to bypassPermissions"
 type: source
 created: 2026-07-23
-last_updated: 2026-07-23
+last_updated: 2026-07-24
 sources: ["rachel.ts", "gate/sendGate.ts", "node_modules/@anthropic-ai/claude-agent-sdk/sdk.d.ts", "node_modules/@anthropic-ai/claude-agent-sdk/sdk.mjs", "https://github.com/blueman82/assistant-agent/pull/59"]
 tags: [source, security, gate, sdk, permissions]
 ---
@@ -40,3 +40,4 @@ Net: the mode flip reaches the CLI, but the "Must be set" contract from the type
 
 - [[capabilities/send-gate]] — the hook this change stress-tests; its `permissionMode` note updated by this ingest
 - [[architecture/overview]] — `runTurn`'s per-turn `options` object is where the flag lives
+- [[sources/2026-07-23-rejection-rca-and-fix-list]] — **the symptom this PR fixed, diagnosed after the fact.** Under `permissionMode: "auto"` a headless bridge turn raised permission prompts nobody could answer, auto-denying with `"The user doesn't want to take this action right now. STOP…"` (RCA mechanism B) — no human involved. The RCA also records the deploy lag: this PR merged 16:55 but the launchd bridge kept running pre-#59 code until its 22:56 restart, so the fix sat dead for six hours. **The RCA does not resolve this page's open `allowDangerouslySkipPermissions` question** — that remains outstanding. Its fix-list item 14 adds a related concern: under bypass, `gate/bashPatterns.ts` is the only send enforcement left in bridge turns, and it has known holes.

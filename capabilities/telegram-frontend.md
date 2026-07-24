@@ -159,11 +159,13 @@ The bridge watches its own health so a failure surfaces on Telegram, instead of 
 
 See [[sources/2026-07-14-bridge-self-monitoring]] for the PR #21/#22 design and rationale, and [[sources/2026-07-15-proactive-layer]] for the PR #26 layer on top.
 
-## Turn timeout, duration logging, and ad-hoc backgrounding (PR #56)
+## Turn timeout (PR #46), duration logging, and ad-hoc backgrounding (PR #56)
 
 `drainFifo` is single-flight, so a single hung turn would otherwise wedge the whole message
 queue silently. `DEFAULT_TURN_TIMEOUT_MS` (10 minutes) aborts any turn that runs past it and
-moves on to the next queued message. This ceiling is a deliberate wedge detector, not a
+moves on to the next queued message. This watchdog is PR #46 (`57cdf56`), not #56 — PR #56 added
+the duration logging and backgrounding offer described below on top of the existing timeout, it
+did not introduce the timeout itself. This ceiling is a deliberate wedge detector, not a
 performance tuning knob — it is not going to be raised by env var (rejected explicitly, see
 [[sources/2026-07-22-adhoc-background-escalation]]: no per-line duration data existed to justify
 a specific bump, and every added minute is added wedge time before a hang is even noticed).

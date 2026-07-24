@@ -2,7 +2,7 @@
 title: "Telegram voice in/out (STT+TTS) spec — architecture cross-refs and unenforced assumptions"
 type: investigation
 created: 2026-07-18
-last_updated: 2026-07-22
+last_updated: 2026-07-24
 sources: ["assistant-agent PR #55", "docs/coderails/specs/telegram-voice-stt-tts.md", "bridge/telegram-bridge.ts", "bridge/api.ts", "proactive/sweep.ts", "prompts/system.md", "scripts/install.sh", "capabilities/telegram-frontend.md", "capabilities/installation.md"]
 tags: [investigation, telegram, voice, stt, tts, bridge, spec-review]
 ---
@@ -57,9 +57,35 @@ Gary asked for a wiki cross-check of `docs/coderails/specs/telegram-voice-stt-tt
 
 7. **New temp-file growth compounds a previously filed, still-open debt item.** [[capabilities/telegram-frontend]] already records: "Temp files in `~/.rachel/tmp/` are never cleaned up — the directory grows over time. No cleanup is scheduled" (from the PR #17 image-reception work). The voice spec adds at least one more inbound temp file per voice note (`.ogg`) plus at least one outbound intermediate (synthesized WAV before ffmpeg conversion, then the converted OGG) per voice-origin reply — multiplying the existing unbounded-growth debt without acknowledging or resolving it.
 
+   > **QUANTIFIED AND RE-DIAGNOSED 2026-07-23.** [[sources/2026-07-23-rejection-rca-and-fix-list]]
+   > (fix-list item 16) measured the directory at **750 voice artifacts**. It also corrects the
+   > attribution above: the bridge's own voice cleanup is **correct** — the `finally`-block unlinks
+   > do their job. The debris comes from direct test invocations and mid-synthesis kills, neither of
+   > which runs the `finally`. **Consequence: more `finally` blocks would not fix this.** The agreed
+   > fix is a startup or daily sweep. Decided, not built.
+
+## Superseded by the 2026-07-23 RCA
+
+Two items above were written before [[sources/2026-07-23-rejection-rca-and-fix-list]] existed and
+must be read through it:
+
+- **The STT side of this spec now has a diagnosed failure mode this page never anticipated.** Every
+  gap above concerns the *outbound* TTS path. The RCA's finding 3 is *inbound*: `transcribe()` hangs
+  on a HuggingFace Hub freshness check performed on every call even with the model fully cached, so
+  a transcribe failure is a **network condition, not slow compute** — it scales with nothing. Gap 5
+  above (no install-time verification of the Python/mlx dependencies) is the closest this page came,
+  and it aimed at a missing dependency rather than a reachable-but-hanging one.
+- **Item 3's still-open residuals are unchanged.** The `sendVoice` size ceiling remains untested and
+  the multi-message split remains unwritten. The RCA does not close either — it addresses the
+  transcribe budget (item 4: 30s → 2 minutes, decided not built), which is a different bound.
+
+Both are **decided, not built**. Nothing in this section describes current behaviour.
+
 ## Relationships
 
 - [[capabilities/telegram-frontend]] — bridge ownership/routing model, reply-content contract, temp-file debt this spec extends
 - [[capabilities/installation]] — the fail-loud preflight/verification pattern the spec's new Python/ffmpeg dependencies aren't wired into
 - [[architecture/overview]] — plumbing/brain split; this spec touches only plumbing (`bridge/`), never `prompts/system.md`, which is where gap 4 (spoken-register awareness) would need to land
 - [[sources/2026-07-08-telegram-image-reception]] — the `[image: path]`-prefix protocol the voice design deliberately does *not* mirror (transcribed text carries no origin tag to the model)
+- [[sources/2026-07-23-rejection-rca-and-fix-list]] — the inbound-STT failure mode this page never anticipated (HuggingFace hub check, not slow compute), and the re-diagnosis of item 7's temp-file debt
+- [[sources/2026-07-22-pr55-voice-synthesis-timeout]] — the outbound-TTS timeout that closed item 3's synthesis-budget question; a **different** bug from the RCA's transcribe stall

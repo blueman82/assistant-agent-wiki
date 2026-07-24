@@ -2,7 +2,7 @@
 title: "Send Gate"
 type: capability
 created: 2026-07-07
-last_updated: 2026-07-23
+last_updated: 2026-07-24
 sources: ["rachel.ts", "gate/sendGate.ts", "gate/surfaces/telegram.ts", "gate/surfaces/queue.ts", "bridge/telegram-bridge.ts", "bridge/notify.ts", "proactive/push.ts", "prompts/system.md", "AGENTS.md", "node_modules/@anthropic-ai/claude-agent-sdk/sdk.d.ts"]
 tags: [capability, gate, security, slack, calendar, telegram]
 ---
@@ -41,6 +41,8 @@ Gmail has no send tool (only `create_draft` + read/label/search) — nothing to 
 - **Slack tool-name confirmation is documentation-sourced, not live-introspected** for this gate's build — if Rachel's live Slack tool names ever drift from what's documented, `GATED_TOOL_NAMES` in `gate/sendGate.ts` silently stops matching. Closing this needs a startup-time live schema check or a future hook-probe run.
 - **`permissionMode` is not a security boundary — the gate does not rely on it.** As of PR #59 (2026-07-23) Rachel's SDK session runs `permissionMode: "bypassPermissions"` (was `"auto"`). The gate is unaffected: `bypassPermissions` acts on the `canUseTool` permission-check path, whereas a `PreToolUse` hook deny is a separate path the SDK honours regardless of mode (`sdk.d.ts:4128`: "PreToolUse hook denies bypass canUseTool"). The mode flip only changes which calls get auto-*allowed*, never whether the gate's *deny* is respected. Sourced from SDK type docs, not an empirical spike of this mode+hook combination — see [[sources/2026-07-23-pr59-bypass-permissions]]. That source also flags an open question: PR #59 set the mode without the documented-as-required `allowDangerouslySkipPermissions: true`, and its runtime consequence is unconfirmed.
 
+- **Under bypass, `gate/bashPatterns.ts` is the only send enforcement left in bridge turns — and it has named holes.** Recorded by [[sources/2026-07-23-rejection-rca-and-fix-list]] (fix-list item 14). The Bash defence-in-depth block above is not a secondary layer in that context; it is the layer. Known gaps, **verified still present 2026-07-24**: `curl --data` POSTs without an explicit `-X POST` evade the calendar detector, and Telegram `sendVoice`/`sendDocument`, Slack `chat.update`/`chat.delete`, and Gmail `drafts.send` have no patterns at all. Closing this is **decided, not built** (medium, with tests).
+
 ## Relationships
 
 - [[capabilities/slack]] — Slack's `slack_send_message` is one of the gated tools
@@ -50,3 +52,4 @@ Gmail has no send tool (only `create_draft` + read/label/search) — nothing to 
 - [[architecture/mcp-integrations]] — the tool surfaces the gate sits in front of
 - [[patterns/extending-system-md]] — the prompt-level draft-first contract this gate enforces mechanically
 - [[sources/2026-07-23-pr59-bypass-permissions]] — the `permissionMode` flip to `bypassPermissions` and why the gate still fires under it
+- [[sources/2026-07-23-rejection-rca-and-fix-list]] — fix-list item 14: `bashPatterns.ts` as the sole remaining send enforcement under bypass, with its named coverage holes

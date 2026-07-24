@@ -34,6 +34,25 @@ Root-level files are not pages and are not governed by the table above:
 `index.md` (navigation, read first), `log.md` (append-only history),
 `calendar-log.md`, and this file.
 
+## Frontmatter fields
+
+Required on every page: `title`, `type`, `created`, `last_updated`, `sources`,
+`tags`. A page missing any of these is a defect — see commit `7752d49`, which
+fixed a page that used `date:` in place of the `created:`/`last_updated:` pair
+and dropped `sources:` entirely.
+
+Two optional fields are **sanctioned additions**, registered here so a future
+lint doesn't read them as drift and strip meaning out of a page:
+
+| Field | Where used | Meaning |
+|-------|-----------|---------|
+| `status` | `investigations/` | Disposition of the decision the page records — e.g. `rejected`, `implemented`. An investigation weighs alternatives and concludes; this field surfaces that conclusion without reading the body. |
+| `origin` | `sources/` | Provenance of an ingested artifact — e.g. `"assistant-agent PR #55 (merged 08f3022, 2026-07-22)"`. |
+
+Adding any further field means editing this table first. Unlike the page-type
+table above, these fields are not hook-enforced — the taxonomy gate checks
+directories only, so this section is a human contract.
+
 ## Why this is enforced, not advised
 
 On 2026-07-21 an agent wrote a page into `decisions/` — not a page type. It
